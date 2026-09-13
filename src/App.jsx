@@ -4,6 +4,7 @@ import { I18nProvider, useT } from "./i18n/index.jsx";
 import { ThemeProvider } from "./lib/theme.jsx";
 import { ToastContainer, Banner, Spinner } from "./components/ui.jsx";
 import { useAuth } from "./data/useAuth";
+import { configMissing } from "./lib/supabase";
 import { useAppData } from "./data/useAppData";
 import LoginScreen from "./pages/Login.jsx";
 import AdminShell from "./pages/AdminShell.jsx";
@@ -31,6 +32,7 @@ export default function App() {
 }
 
 function Root() {
+  if (configMissing.length) return <ConfigMissing />;
   const portalToken = new URLSearchParams(window.location.search).get("portal");
   if (portalToken) return <ClientPortal token={portalToken} />;
   return <AuthedApp />;
@@ -79,5 +81,19 @@ function AuthedApp() {
       {page === "reportes" && <ReportsPage {...common} />}
       {page === "rentabilidad" && <ProfitabilityPage {...common} />}
     </AdminShell>
+  );
+}
+
+function ConfigMissing() {
+  return (
+    <div style={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, background: "var(--bg)" }}>
+      <div style={{ maxWidth: 520 }}>
+        <Banner tone="danger" icon={AlertTriangle}>
+          <strong>Falta configuración de Supabase.</strong> No están definidas: <code>{configMissing.join(", ")}</code>.
+          <br />En Vercel: Project → Settings → Environment Variables, agregar ambas y volver a hacer deploy.
+          En local: copiá <code>.env.example</code> a <code>.env</code> y completalo.
+        </Banner>
+      </div>
+    </div>
   );
 }
