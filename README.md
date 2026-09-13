@@ -105,6 +105,13 @@ campos económicos o de asignación del trabajo.
 
 ---
 
+## De staging a producción
+
+Si el proyecto de prueba se convierte en el oficial: correr `supabase/dev/preparar_produccion.sql`
+(borra los datos de prueba, conserva el esquema, activa realtime), crear el primer admin
+(paso 2 de arriba), desplegar las funciones y el secret (paso 3), y en Authentication → URL
+Configuration poner la URL pública como *Site URL*.
+
 ## Qué cambió respecto del prototipo
 
 - Autenticación real (Supabase Auth) y RLS por rol. Fuera `usuario`/`password` de `staff`.
