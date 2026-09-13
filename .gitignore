@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.smoke/
+.env
+.env.*
+!.env.example
+!.env.demo
+.DS_Store
