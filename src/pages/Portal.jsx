@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Sparkles, History, Clock, Star, Heart, Send, CheckCheck, CheckCircle2, Circle, AlertTriangle, Calendar, Truck, XCircle, Plus } from "lucide-react";
 import { Avatar, C, Field, LangSwitch, ThemeSwitch, Modal, ProgressBar, LiveTimer, StarRating, EmptyState, FONT_DISPLAY } from "../components/ui.jsx";
 import { useT } from "../i18n/index.jsx";
+import { MarkBadge, Wordmark } from "../components/Brand.jsx";
 import { formatFecha, todayISO } from "../lib/dates";
 import { durationLabel } from "../lib/format";
 import { toast } from "../lib/toast";
@@ -82,10 +83,10 @@ function PortalBody({ data, token, reload, t, lang }) {
       <header style={{ background: "var(--hero-bg, linear-gradient(135deg, var(--primary) 0%, var(--primary-mid) 60%, var(--primary-bright) 100%))", padding: "0 16px", position: "sticky", top: 0, zIndex: 30, boxShadow: "var(--shadow-md)", borderBottom: "1px solid var(--border)" }}>
         <div style={{ maxWidth: 600, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0", gap: 8, color: "var(--hero-fg, #fff)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-            <div style={{ width: 34, height: 34, borderRadius: 10, background: "rgba(255,255,255,.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Sparkles size={16} /></div>
+            <MarkBadge size={36} />
             <div style={{ minWidth: 0 }}>
               <p style={{ fontFamily: FONT_DISPLAY, fontWeight: 700, fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{client.nombre}</p>
-              <p style={{ fontSize: 10, opacity: .75 }}>{t("portal.title")}</p>
+              <p style={{ fontSize: 10, opacity: .75, display: "flex", alignItems: "center", gap: 4 }}>{t("portal.title")} · ZyloClean</p>
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>

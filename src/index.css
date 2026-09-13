@@ -1278,3 +1278,10 @@ button, [role="button"], a { touch-action: manipulation; }
 [data-theme="dark"] ::-webkit-scrollbar-thumb { background: #3A3A3A; }
 [data-theme="dark"] { --modal-head-bg: var(--surface-2); --modal-head-fg: var(--ink); --modal-head-border: var(--border); --modal-head-btn: var(--surface-3); --hero-bg: var(--surface); --hero-fg: var(--ink); }
 [data-theme="dark"] .login-blobs { display: none; }
+
+/* Marca: colores del isotipo/logotipo por tema */
+:root { --brand-dark: #01664E; --brand-light: #45B593; --brand-badge-bg: rgba(255,255,255,.92); }
+[data-theme="dark"] { --brand-dark: #EDEDED; --brand-light: #3ECF8E; --brand-badge-bg: #1F1F1F; }
+.brand-mark svg, .brand-wordmark svg { height: 100%; width: auto; display: block; }
+/* Sobre fondos verdes (cabeceras en modo claro) el logotipo va en blanco */
+.on-brand { --brand-dark: #FFFFFF; --brand-light: rgba(255,255,255,.75); }

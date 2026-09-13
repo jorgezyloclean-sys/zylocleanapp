@@ -2,10 +2,11 @@
 // Solo ve sus trabajos (RLS). Registra SU inicio/fin (registro_horas) — spec §3.5.
 import { useMemo, useState } from "react";
 import {
-  LogOut, Clock, History, MapPin, ChevronRight, KeyRound, Wifi, Phone, Package, Eye, StickyNote, Camera, AlertTriangle, CheckCheck, X, XCircle, CheckCircle2, Sparkles, Users,
+  LogOut, Clock, History, MapPin, ChevronRight, KeyRound, Wifi, Phone, Package, Eye, StickyNote, Camera, AlertTriangle, CheckCheck, X, XCircle, CheckCircle2, Users,
 } from "lucide-react";
 import { Avatar, C, Field, LangSwitch, ThemeSwitch, Modal, ProgressBar, StatusBadge, LiveTimer, StarRating, SignedImg, PhotoLink, Pill, FONT_DISPLAY, FONT_MONO } from "../components/ui.jsx";
 import { tipoFotoLabel } from "../components/PhotosField.jsx";
+import { MarkBadge } from "../components/Brand.jsx";
 import { useT } from "../i18n/index.jsx";
 import { addDays, formatFecha, todayISO } from "../lib/dates";
 import { hoursLabel, minutesLabel } from "../lib/format";
@@ -33,7 +34,7 @@ export default function EmployeeView({ profile, onLogout, onLangChange, clients,
     <div style={{ minHeight: "100dvh", background: C.bg, paddingBottom: "env(safe-area-inset-bottom)" }}>
       <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", paddingTop: "calc(14px + env(safe-area-inset-top))", background: "var(--hero-bg, linear-gradient(135deg, var(--primary), var(--primary-mid)))", color: "var(--hero-fg, #fff)", gap: 10, borderBottom: "1px solid var(--border)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Sparkles size={18} /></div>
+          <MarkBadge size={38} />
           <div style={{ minWidth: 0 }}>
             <p style={{ fontFamily: FONT_DISPLAY, fontWeight: 700, fontSize: 15, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t("emp.hello", { name: profile.nombre.split(" ")[0] })}</p>
             <p style={{ fontSize: 11, opacity: .8 }}>{t("emp.pendingToday", { n: pendHoy })}</p>

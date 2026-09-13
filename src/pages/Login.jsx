@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AlertTriangle, Eye, EyeOff, KeyRound, Lock, Mail, RefreshCw } from "lucide-react";
-import zyloLogo from "../assets/zylo-logo-header.svg";
+import { Wordmark } from "../components/Brand.jsx";
 import { C, Field, LangSwitch, ThemeSwitch } from "../components/ui.jsx";
 import { useT } from "../i18n/index.jsx";
 
@@ -38,7 +38,7 @@ export default function LoginScreen({ onLogin, notStaff, onLogout }) {
 
       <div className="animate-fadeUp" style={{ position: "relative", zIndex: 10, width: "100%", maxWidth: 400 }}>
         <div style={{ textAlign: "center", marginBottom: 28 }}>
-          <img src={zyloLogo} alt="ZyloClean" width={180} height={40} style={{ height: 40, width: "auto" }} />
+          <Wordmark height={44} />
           <p style={{ color: C.muted, fontSize: 13, marginTop: 8 }}>{t("login.title")}</p>
         </div>
 

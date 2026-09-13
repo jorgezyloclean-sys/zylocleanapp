@@ -3,9 +3,7 @@ import {
   LayoutDashboard, Building2, Users, CalendarDays, ClipboardCheck, BarChart3, TrendingUp,
   LogOut, ChevronRight, Menu,
 } from "lucide-react";
-import zylo from "../assets/zylo.svg";
-import Logo from "../assets/logo-cropped.svg";
-import zyloLogo from "../assets/zylo-logo-header.svg";
+import { Mark, Wordmark } from "../components/Brand.jsx";
 import { Avatar, C, LangSwitch, ThemeSwitch } from "../components/ui.jsx";
 import { useT } from "../i18n/index.jsx";
 
@@ -31,11 +29,11 @@ export default function AdminShell({ profile, onLogout, onLangChange, children, 
       <aside className={`admin-sidebar ${mobileOpen ? "admin-sidebar--open" : ""}`} style={{ width: collapsed ? 68 : 232 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 4px", marginBottom: 26, overflow: "hidden" }}>
           <div style={{ width: 38, height: 38, borderRadius: 12, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <img src={Logo} alt="" width={20} height={20} style={{ height: 20 }} />
+            <Mark size={24} className="on-brand" />
           </div>
           {!collapsed && (
             <div className="animate-fadeIn">
-              <img src={zylo} alt="ZyloClean" height={18} style={{ height: 18 }} />
+              <Wordmark height={20} className="on-brand" />
               <p style={{ fontSize: 10, color: "rgba(255,255,255,.4)", textTransform: "uppercase", letterSpacing: ".1em" }}>{t("nav.admin")}</p>
             </div>
           )}
@@ -83,7 +81,7 @@ export default function AdminShell({ profile, onLogout, onLangChange, children, 
       <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
         <header className="admin-mobile-header">
           <button onClick={() => setMobileOpen((p) => !p)} className="icon-btn" aria-label={t("common.menu")} style={{ background: C.pale, color: C.primary }}><Menu size={18} /></button>
-          <img src={zyloLogo} alt="ZyloClean" height={28} style={{ height: 28 }} />
+          <Wordmark height={28} />
           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
             <ThemeSwitch />
             <button onClick={onLogout} className="icon-btn" aria-label={t("common.logout")} style={{ background: C.dangerPale, color: C.danger }}><LogOut size={16} /></button>

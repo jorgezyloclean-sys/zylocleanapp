@@ -1,17 +1,16 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg id="Capa_2" data-name="Capa 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1489.92 283.18">
+<svg role="img" aria-label="ZyloClean" id="Capa_2" data-name="Capa 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1489.92 283.18">
   <defs>
     <style>
       .cls-1, .cls-2 {
-        fill: #01664e;
+        fill: var(--brand-dark, #01664e);
       }
 
       .cls-3 {
-        fill: #45b593;
+        fill: var(--brand-light, #45b593);
       }
 
       .cls-2 {
-        stroke: #01664e;
+        stroke: var(--brand-dark, #01664e);
         stroke-miterlimit: 10;
         stroke-width: 7px;
       }

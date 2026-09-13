@@ -1,16 +1,16 @@
-<svg viewBox="376.65177600000004 0 1114.46016 275.72789473684213" xmlns="http://www.w3.org/2000/svg" data-name="Capa 2" id="Capa_2" style="max-height: 500px" width="1114.46016" height="275.72789473684213">
+<svg role="img" aria-label="ZyloClean" viewBox="0 0 302.45376000000005 293.61294736842103" xmlns="http://www.w3.org/2000/svg" data-name="Capa 2" id="Capa_2" >
   <defs>
     <style>
       .cls-1, .cls-2 {
-        fill: #01664e;
+        fill: var(--brand-dark, #01664e);
       }
 
       .cls-3 {
-        fill: #45b593;
+        fill: var(--brand-light, #45b593);
       }
 
       .cls-2 {
-        stroke: #01664e;
+        stroke: var(--brand-dark, #01664e);
         stroke-miterlimit: 10;
         stroke-width: 7px;
       }
