@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { C, Field, Toggle } from "./ui.jsx";
 import FrequencyField from "./FrequencyField.jsx";
-import { SERVICE_TYPES } from "./ClientForm.jsx";
+import { SERVICE_TYPES, serviceTypeLabel } from "./ClientForm.jsx";
 import { todayISO } from "../lib/dates";
 import { useT } from "../i18n/index.jsx";
+import { localizeChecklist } from "../lib/checklist";
 
 export function emptyServicio(client) {
   return {
@@ -18,7 +19,7 @@ export function emptyServicio(client) {
 }
 
 export default function ServicioForm({ client, initial, checklists, onSave, onCancel, saving }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const [form, setForm] = useState({ ...emptyServicio(client), ...initial });
   const [errors, setErrors] = useState({});
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
@@ -46,7 +47,7 @@ export default function ServicioForm({ client, initial, checklists, onSave, onCa
     <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 16 }} noValidate>
       <div className="form-grid-2">
         <Field label={t("sf.type")} required error={errors.tipo_servicio}>
-          <select className="input-base" value={form.tipo_servicio} onChange={set("tipo_servicio")}>{SERVICE_TYPES.map((s) => <option key={s}>{s}</option>)}</select>
+          <select className="input-base" value={form.tipo_servicio} onChange={set("tipo_servicio")}>{SERVICE_TYPES.map((s) => <option key={s} value={s}>{serviceTypeLabel(s, t)}</option>)}</select>
         </Field>
         <Field label={t("sf.location")}>
           <select className="input-base" value={form.ubicacion_id || ""} onChange={set("ubicacion_id")}>
@@ -89,7 +90,7 @@ export default function ServicioForm({ client, initial, checklists, onSave, onCa
       <Field label={t("common.checklist")} hint={t("sf.checklistHint")}>
         <select className="input-base" value={form.checklist_id || ""} onChange={set("checklist_id")}>
           <option value="">{t("sf.checklistClient")}</option>
-          {checklists.map((t) => <option key={t.id} value={t.id}>{t.nombre}</option>)}
+          {checklists.map((ck) => <option key={ck.id} value={ck.id}>{localizeChecklist(ck, lang).nombre}</option>)}
         </select>
       </Field>
       <Field label={t("common.notes")}><textarea rows={2} className="input-base" value={form.notas || ""} onChange={set("notas")} style={{ resize: "vertical" }} /></Field>

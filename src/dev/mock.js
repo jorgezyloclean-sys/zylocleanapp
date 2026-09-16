@@ -25,8 +25,16 @@ const store = {
     { id: "e4", nombre: "Sigrún Ólafsdóttir", rol: "operativo", tipo: "Por hora", pago: "Por trabajo", idiomas: ["Islandés", "Inglés"], activo: true, estado: "activo", idioma: "is", auth_user_id: "auth-4", email: "sigrun@example.is", telefono: "", destacado: false },
   ],
   checklists: [
-    { id: "t1", nombre: "Oficinas — estándar", tareas: ["Vaciar papeleras", "Aspirar alfombras", "Limpiar escritorios", "Baños completos", "Cocina y microondas", "Cristales interiores"] },
-    { id: "t2", nombre: "Local gastronómico", tareas: ["Desengrasar cocina", "Pisos con desinfectante", "Baños", "Mesas y sillas", "Sacar basura y reciclaje"] },
+    { id: "t1", nombre: "Oficinas — estándar", tareas: ["Vaciar papeleras", "Aspirar alfombras", "Limpiar escritorios", "Baños completos", "Cocina y microondas", "Cristales interiores"],
+      traducciones: {
+        en: { nombre: "Offices — standard", tareas: ["Empty bins", "Vacuum carpets", "Clean desks", "Full bathrooms", "Kitchen and microwave", "Interior glass"] },
+        is: { nombre: "Skrifstofur — staðall", tareas: ["Tæma ruslafötur", "Ryksuga teppi", "Þrífa skrifborð", "Salerni að fullu", "Eldhús og örbylgjuofn", ""] },
+      } },
+    { id: "t2", nombre: "Local gastronómico", tareas: ["Desengrasar cocina", "Pisos con desinfectante", "Baños", "Mesas y sillas", "Sacar basura y reciclaje"],
+      traducciones: {
+        en: { nombre: "Restaurant", tareas: ["Degrease kitchen", "Floors with disinfectant", "Bathrooms", "Tables and chairs", "Take out trash and recycling"] },
+        is: { nombre: "Veitingastaður", tareas: ["Fituhreinsa eldhús", "Gólf með sótthreinsiefni", "Salerni", "Borð og stólar", "Fara út með rusl og endurvinnslu"] },
+      } },
     { id: "t3", nombre: "Airbnb — cambio de huésped", tareas: ["Cambiar sábanas", "Toallas limpias", "Baño completo", "Cocina y heladera", "Reponer amenities", "Foto final de cada ambiente"] },
   ],
   servicios_contratados: [

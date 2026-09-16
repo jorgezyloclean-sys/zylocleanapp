@@ -9,11 +9,12 @@ import { hoursLabel, minutesLabel } from "../lib/format";
 import { checklistPct, jobHoras, registroHoras } from "../lib/stats";
 import { run, toast } from "../lib/toast";
 import * as api from "../data/api";
+import { localizeChecklist } from "../lib/checklist";
 
 export default function JobDetailModal({ job, clients, staff, checklists, registros, patch, profile, onClose, onEdit, onDelete, confirm }) {
   const { t, lang } = useT();
   const c = clients.find((cl) => cl.id === job.clienteId);
-  const chk = checklists.find((ch) => ch.id === job.checklistId);
+  const chk = localizeChecklist(checklists.find((ch) => ch.id === job.checklistId), lang);
   const progress = checklistPct(job, chk);
   const regs = registros.filter((r) => r.job_id === job.id);
   const [noRealizado, setNoRealizado] = useState(null);

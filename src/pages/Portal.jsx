@@ -9,6 +9,7 @@ import { formatFecha, todayISO } from "../lib/dates";
 import { durationLabel } from "../lib/format";
 import { toast } from "../lib/toast";
 import * as api from "../data/api";
+import { localizeChecklist } from "../lib/checklist";
 
 const STEPS = [
   { id: "scheduled", key: "portal.step.scheduled", icon: Calendar },
@@ -48,7 +49,7 @@ function PortalBody({ data, token, reload, t, lang }) {
     return proximo || ultimo || null;
   }, [jobs, hoy]);
   const pastJobs = jobs.filter((j) => j.id !== activeJob?.id && (j.estado === "finalizado" || j.estado === "no_realizado"));
-  const checklist = activeJob ? checklists.find((c) => c.id === activeJob.checklistId) : null;
+  const checklist = activeJob ? localizeChecklist(checklists.find((c) => c.id === activeJob.checklistId), lang) : null;
   const [rating, setRating] = useState(0);
   const [comentario, setComentario] = useState("");
   const [request, setRequest] = useState(null);

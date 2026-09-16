@@ -1137,6 +1137,17 @@ body {
     height: auto;
   }
 
+  /* Pie del modal en teléfono: los botones se reparten el ancho en vez de desbordar */
+  .modal-foot {
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  .modal-foot > button {
+    flex: 1 1 calc(50% - 10px);
+    min-width: 0;
+    justify-content: center;
+    margin-right: 0 !important;
+  }
+
   .toast-container {
     bottom: 12px;
     right: 12px;

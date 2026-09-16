@@ -56,7 +56,7 @@ export async function deleteJob(id) { if (MOCK) return mockApi.remove("jobs", id
 
 /* ------------------------------------------------------------ checklists */
 export async function insertChecklist(row) {
-  const data = { id: newId("t"), tareas: [], ...row };
+  const data = { id: newId("t"), tareas: [], traducciones: {}, ...row };
   if (MOCK) return mockApi.upsert("checklists", data);
   must(await supabase.from("checklists").insert(data));
   return data;

@@ -5,6 +5,7 @@ import PhotosField from "./PhotosField.jsx";
 import { formatKennitala } from "../lib/format";
 import { newId } from "../lib/ids";
 import { useT } from "../i18n/index.jsx";
+import { localizeChecklist } from "../lib/checklist";
 
 export const SERVICE_TYPES = [
   "Limpieza comercial / oficinas",
@@ -15,6 +16,9 @@ export const SERVICE_TYPES = [
   "Asociación de propietarios",
   "Post-construcción",
 ];
+// Los tipos de servicio se guardan en español (son datos); en pantalla se muestran traducidos.
+export const serviceTypeLabel = (v, t) => { const i = SERVICE_TYPES.indexOf(v); return i >= 0 ? t(`svc.type.${i}`) : (v || ""); };
+
 export const CLIENT_TIPOS = ["empresa", "local", "domicilio"];
 export const clientTipoLabel = (tipo, t) => t(`cli.tipo.${CLIENT_TIPOS.includes(tipo) ? tipo : "empresa"}`);
 
@@ -29,7 +33,7 @@ export function emptyClient() {
 }
 
 export default function ClientForm({ initial, onSave, onCancel, checklists, saving }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const [form, setForm] = useState({ ...emptyClient(), ...initial, ubicaciones: Array.isArray(initial.ubicaciones) && initial.ubicaciones.length ? initial.ubicaciones : emptyClient().ubicaciones });
   const [errors, setErrors] = useState({});
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
@@ -58,7 +62,7 @@ export default function ClientForm({ initial, onSave, onCancel, checklists, savi
       <div className="form-grid-2">
         <Field label={t("cli.f.rubro")}><input className="input-base" value={form.rubro || ""} onChange={set("rubro")} placeholder={t("cf.rubroPh")} /></Field>
         <Field label={t("cli.f.servicio")}>
-          <select className="input-base" value={form.servicio || ""} onChange={set("servicio")}>{SERVICE_TYPES.map((s) => <option key={s}>{s}</option>)}</select>
+          <select className="input-base" value={form.servicio || ""} onChange={set("servicio")}>{SERVICE_TYPES.map((s) => <option key={s} value={s}>{serviceTypeLabel(s, t)}</option>)}</select>
         </Field>
       </div>
       <div className="form-grid-2">
@@ -98,7 +102,7 @@ export default function ClientForm({ initial, onSave, onCancel, checklists, savi
       <Field label={t("cli.f.checklist")} hint={t("cf.checklistHint")}>
         <select className="input-base" value={form.checklistId || ""} onChange={set("checklistId")}>
           <option value="">{t("cf.checklistNone")}</option>
-          {checklists.map((t) => <option key={t.id} value={t.id}>{t.nombre}</option>)}
+          {checklists.map((ck) => <option key={ck.id} value={ck.id}>{localizeChecklist(ck, lang).nombre}</option>)}
         </select>
       </Field>
       <Field label={t("cf.internalNotes")}><textarea rows={2} className="input-base" value={form.notas || ""} onChange={set("notas")} style={{ resize: "vertical" }} /></Field>

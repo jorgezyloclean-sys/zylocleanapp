@@ -243,6 +243,22 @@ k("cli.anonDone", "Cliente anonimizado", "Client anonymised", "Viðskiptavinur n
 k("cli.tipo.empresa", "Empresa", "Company", "Fyrirtæki")
 k("cli.tipo.local", "Local comercial", "Retail premises", "Verslunarhúsnæði")
 k("cli.tipo.domicilio", "Domicilio", "Residence", "Heimili")
+# Tipos de servicio (SERVICE_TYPES en ClientForm.jsx, mismo orden)
+k("svc.type.0", "Limpieza comercial / oficinas", "Commercial / office cleaning", "Þrif á skrifstofum / atvinnuhúsnæði")
+k("svc.type.1", "Limpieza de locales / retail", "Retail premises cleaning", "Þrif á verslunum")
+k("svc.type.2", "Limpieza industrial", "Industrial cleaning", "Iðnaðarþrif")
+k("svc.type.3", "Renta de corta estancia (Airbnb)", "Short-term rental (Airbnb)", "Skammtímaleiga (Airbnb)")
+k("svc.type.4", "Limpieza de mudanza", "Move-out cleaning", "Flutningsþrif")
+k("svc.type.5", "Asociación de propietarios", "Homeowners association", "Húsfélag")
+k("svc.type.6", "Post-construcción", "Post-construction", "Þrif eftir framkvæmdir")
+# Editor de traducciones de checklists
+k("chk.langEdit", "Idioma", "Language", "Tungumál")
+k("chk.langSource", "Original (ES)", "Original (ES)", "Frumtexti (ES)")
+k("chk.trHint", "El personal ve el checklist en el idioma de su app. Lo que quede sin traducir se muestra en español.", "Staff see the checklist in their app language. Anything left untranslated is shown in Spanish.", "Starfsfólk sér gátlistann á tungumáli appsins síns. Það sem er óþýtt birtist á spænsku.")
+k("chk.trCoverage", "{done}/{total} traducidos", "{done}/{total} translated", "{done}/{total} þýtt")
+k("chk.trNamePh", "Nombre en {lang}…", "Name in {lang}…", "Nafn á {lang}…")
+k("chk.trTaskPh", "Traducción…", "Translation…", "Þýðing…")
+k("chk.trAddHint", "Las tareas se agregan y ordenan desde el original (ES).", "Tasks are added and reordered from the original (ES).", "Verkefnum er bætt við og raðað í frumtextanum (ES).")
 
 # formulario de cliente
 k("cf.name", "Nombre del cliente", "Client name", "Nafn viðskiptavinar")

@@ -11,6 +11,8 @@ import { planificar } from "../lib/recurrencia";
 import { run, toast } from "../lib/toast";
 import * as api from "../data/api";
 import { emailJobToStaff, emailJobAssignedToClient } from "../email/templates";
+import { localizeChecklist } from "../lib/checklist";
+import { serviceTypeLabel } from "../components/ClientForm.jsx";
 
 const emptyForm = (checklists) => ({ clienteId: "", servicio_id: "", ubicacionId: "", empleados: [], fecha: todayISO(), hora: "08:00", checklistId: checklists[0]?.id || "", duracion_estimada_min: "", monto: "", notas: "" });
 
@@ -94,7 +96,7 @@ export default function SchedulePage({ clients, staff, jobs, checklists, servici
           {visibles.map((job) => {
             const c = clients.find((cl) => cl.id === job.clienteId);
             const emps = (job.empleados || []).map((eid) => staff.find((s) => s.id === eid)).filter(Boolean);
-            const chk = checklists.find((ch) => ch.id === job.checklistId);
+            const chk = localizeChecklist(checklists.find((ch) => ch.id === job.checklistId), lang);
             const loc = c?.ubicaciones?.find((u) => u.id === job.ubicacionId);
             const abiertos = registros.filter((r) => r.job_id === job.id && !r.fin);
             const hrs = jobHoras(job, registros);
@@ -174,7 +176,7 @@ export default function SchedulePage({ clients, staff, jobs, checklists, servici
 
 /* ============================================================ Formulario */
 function JobForm({ form, setForm, clients, staff, checklists, servicios, onSubmit, onCancel, saving, isEdit }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const client = clients.find((c) => c.id === form.clienteId);
   const svc = servicios.filter((s) => s.cliente_id === form.clienteId && s.activo);
   const ubicaciones = client?.ubicaciones || [];
@@ -198,7 +200,7 @@ function JobForm({ form, setForm, clients, staff, checklists, servicios, onSubmi
         <Field label={t("sch.f.service")} hint={svc.length ? t("sch.f.serviceHint") : form.clienteId ? t("sch.f.serviceNone") : ""}>
           <select className="input-base" value={form.servicio_id} onChange={(e) => pickServicio(e.target.value)} disabled={!svc.length}>
             <option value="">{t("sch.f.manual")}</option>
-            {svc.map((s) => <option key={s.id} value={s.id}>{s.tipo_servicio} · {s.hora}</option>)}
+            {svc.map((s) => <option key={s.id} value={s.id}>{serviceTypeLabel(s.tipo_servicio, t)} · {s.hora}</option>)}
           </select>
         </Field>
       </div>
@@ -212,7 +214,7 @@ function JobForm({ form, setForm, clients, staff, checklists, servicios, onSubmi
         <Field label={t("common.checklist")} required>
           <select required className="input-base" value={form.checklistId} onChange={(e) => setForm({ ...form, checklistId: e.target.value })}>
             <option value="">{t("common.select")}</option>
-            {checklists.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+            {checklists.map((c) => <option key={c.id} value={c.id}>{localizeChecklist(c, lang).nombre}</option>)}
           </select>
         </Field>
       </div>
@@ -293,7 +295,7 @@ function GenerateModal({ clients, staff, servicios, jobs, checklists, patch, onC
           return (
             <div key={s.id} style={{ padding: 12, borderRadius: 12, border: `1px solid ${C.border}`, background: C.surface2 }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-                <div><p style={{ fontWeight: 700, fontSize: 13.5, color: C.ink }}>{client?.nombre} · {s.tipo_servicio}</p><p style={{ fontSize: 11.5, color: C.muted }}>{t("sch.g.dates", { n: items.length, list: items.slice(0, 6).map((p) => formatFecha(p.fecha, lang).slice(0, 5)).join(", ") + (items.length > 6 ? "…" : "") })}</p></div>
+                <div><p style={{ fontWeight: 700, fontSize: 13.5, color: C.ink }}>{client?.nombre} · {serviceTypeLabel(s.tipo_servicio, t)}</p><p style={{ fontSize: 11.5, color: C.muted }}>{t("sch.g.dates", { n: items.length, list: items.slice(0, 6).map((p) => formatFecha(p.fecha, lang).slice(0, 5)).join(", ") + (items.length > 6 ? "…" : "") })}</p></div>
                 <Pill>{s.hora} · {minutesLabel(s.duracion_estimada_min)} × {s.personas_previstas}</Pill>
               </div>
               <p style={{ fontSize: 11, color: C.muted, margin: "8px 0 6px" }}>{t("sch.g.assignTo")}</p>

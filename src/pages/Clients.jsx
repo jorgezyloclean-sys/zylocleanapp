@@ -6,7 +6,8 @@ import {
 import {
   Avatar, C, EmptyState, Modal, PageHeader, Pill, Segmented, StarRating, StatusBadge, PhotoLink, SignedImg, useConfirm, Banner,
 } from "../components/ui.jsx";
-import ClientForm, { emptyClient, clientTipoLabel } from "../components/ClientForm.jsx";
+import ClientForm, { emptyClient, clientTipoLabel, serviceTypeLabel } from "../components/ClientForm.jsx";
+import { localizeChecklist } from "../lib/checklist";
 import ServicioForm from "../components/ServicioForm.jsx";
 import { FrequencyBadge, frecuenciaLabel } from "../components/FrequencyField.jsx";
 import { tipoFotoLabel } from "../components/PhotosField.jsx";
@@ -193,11 +194,11 @@ function ClientDetailModal({ client, onClose, onEdit, onDelete, jobs, staff, che
   }
 
   const rows = [
-    [t("cli.f.tipo"), clientTipoLabel(client.tipo, t)], [t("cli.f.rubro"), client.rubro], [t("cli.f.servicio"), client.servicio],
+    [t("cli.f.tipo"), clientTipoLabel(client.tipo, t)], [t("cli.f.rubro"), client.rubro], [t("cli.f.servicio"), serviceTypeLabel(client.servicio, t)],
     [t("cli.f.kennitala"), client.kennitala], [t("cli.f.m2"), client.m2 ? `${client.m2} m²` : null], [t("cli.f.email"), client.email], [t("cli.f.phone"), client.telefono],
     [t("cli.f.contact"), client.contactoHabitual], [t("cli.f.emergency"), client.contactoEmergencia], [t("cli.f.access"), client.acceso],
     [t("cli.f.products"), client.productos], [t("cli.f.discretion"), client.discrecion], [t("cli.f.wifi"), client.wifi],
-    [t("cli.f.checklist"), checklists.find((c) => c.id === client.checklistId)?.nombre], [t("cli.f.notes"), client.notas],
+    [t("cli.f.checklist"), localizeChecklist(checklists.find((c) => c.id === client.checklistId), lang)?.nombre], [t("cli.f.notes"), client.notas],
   ];
 
   return (
@@ -286,7 +287,7 @@ function ClientDetailModal({ client, onClose, onEdit, onDelete, jobs, staff, che
                 <div key={s.id} style={{ padding: "12px 14px", borderRadius: 12, background: C.surface2, border: `1px solid ${s.activo ? C.borderSubtle : C.border}`, opacity: s.activo ? 1 : .6 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
                     <div style={{ minWidth: 0 }}>
-                      <p style={{ fontWeight: 700, fontSize: 13.5, color: C.ink }}>{s.tipo_servicio}</p>
+                      <p style={{ fontWeight: 700, fontSize: 13.5, color: C.ink }}>{serviceTypeLabel(s.tipo_servicio, t)}</p>
                       <p style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>{u?.direccion || t("cli.allLocations")} · {s.hora}</p>
                       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
                         <FrequencyBadge frecuencia={s.frecuencia} />

@@ -15,9 +15,11 @@ import { photoPath, uploadPhoto, removePhoto } from "../lib/storage";
 import { run, toast } from "../lib/toast";
 import * as api from "../data/api";
 import { emailJobCompleted } from "../email/templates";
+import { localizeChecklists } from "../lib/checklist";
 
-export default function EmployeeView({ profile, onLogout, onLangChange, clients, jobs, checklists, registros, patch }) {
+export default function EmployeeView({ profile, onLogout, onLangChange, clients, jobs, checklists: rawChecklists, registros, patch }) {
   const { t, lang } = useT();
+  const checklists = useMemo(() => localizeChecklists(rawChecklists, lang), [rawChecklists, lang]);
   const me = profile.id;
   const hoy = todayISO();
   const mis = useMemo(() => jobs.filter((j) => (j.empleados || []).includes(me)), [jobs, me]);

@@ -229,13 +229,13 @@ function StaffDetail({ item: s, jobs, clients, registros, checklists, profile, p
       {s.auth_user_id ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <Banner tone="info" icon={UserCheck}>{t("st.accessHas", { email: s.email })}</Banner>
-          <div style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
-            <Field label={t("st.newPass")} hint={t("st.passHint")}>
-              <input type="text" autoComplete="new-password" className="input-base" value={userForm.password} onChange={(e) => setUserForm({ ...userForm, password: e.target.value })} style={{ width: 220 }} />
-            </Field>
-            <button className="btn-ghost" onClick={resetPass} disabled={busy}>{t("st.changePass")}</button>
-            {s.id !== profile.id && <button className="btn-ghost" style={{ color: C.danger }} onClick={quitarAcceso} disabled={busy}><UserX size={14} /> {t("st.removeAccess")}</button>}
-          </div>
+          <Field label={t("st.newPass")} hint={t("st.passHint")}>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <input type="text" autoComplete="new-password" className="input-base" value={userForm.password} onChange={(e) => setUserForm({ ...userForm, password: e.target.value })} style={{ flex: "1 1 200px", maxWidth: 280 }} />
+              <button className="btn-ghost" onClick={resetPass} disabled={busy}>{t("st.changePass")}</button>
+            </div>
+          </Field>
+          {s.id !== profile.id && <button className="btn-ghost" style={{ color: C.danger, alignSelf: "flex-start" }} onClick={quitarAcceso} disabled={busy}><UserX size={14} /> {t("st.removeAccess")}</button>}
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>

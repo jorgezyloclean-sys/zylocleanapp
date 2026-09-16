@@ -1,59 +1,79 @@
 // Plantillas de checklist editables por administración sin ayuda técnica (spec §3.4).
+// El original se carga en español; las pestañas EN / IS cargan la traducción que ve el personal.
 import { useEffect, useState } from "react";
-import { Plus, Trash2, X, ArrowUp, ArrowDown, ClipboardCheck, Copy } from "lucide-react";
-import { C, EmptyState, PageHeader, useConfirm, FONT_MONO } from "../components/ui.jsx";
+import { Plus, Trash2, X, ArrowUp, ArrowDown, ClipboardCheck, Copy, Languages } from "lucide-react";
+import { C, EmptyState, PageHeader, Segmented, useConfirm, FONT_MONO } from "../components/ui.jsx";
 import { run } from "../lib/toast";
-import { useT } from "../i18n/index.jsx";
+import { mapTareas, translationCoverage, SOURCE_LANG } from "../lib/checklist";
+import { useT, LANGS } from "../i18n/index.jsx";
 import * as api from "../data/api";
+
+const snapshot = (c) => ({ nombre: c.nombre, tareas: [...(c.tareas || [])], traducciones: JSON.parse(JSON.stringify(c.traducciones || {})) });
 
 export default function ChecklistsPage({ checklists, clients, servicios, patch }) {
   const { t } = useT();
   const [activeId, setActiveId] = useState(checklists[0]?.id || "");
   const [draft, setDraft] = useState(null); // copia editable de la plantilla activa
+  const [editLang, setEditLang] = useState(SOURCE_LANG); // qué idioma se está editando
   const [newTask, setNewTask] = useState("");
   const [confirm, confirmDialog] = useConfirm();
   const active = checklists.find((c) => c.id === activeId);
+  const translating = editLang !== SOURCE_LANG;
+  const tr = draft?.traducciones?.[editLang] || { nombre: "", tareas: [] };
 
-  useEffect(() => { setDraft(active ? { nombre: active.nombre, tareas: [...active.tareas] } : null); }, [activeId, active?.nombre, active?.tareas?.length]);
+  useEffect(() => { setDraft(active ? snapshot(active) : null); }, [activeId, active?.nombre, active?.tareas?.length, active?.traducciones]);
 
-  async function persist(tareas, nombre = draft?.nombre) {
-    const ok = await run(() => api.updateChecklist(activeId, { tareas, nombre }));
-    if (ok) patch("checklists", { id: activeId, tareas, nombre });
+  async function persist(next) {
+    const row = { nombre: draft.nombre, tareas: draft.tareas, traducciones: draft.traducciones, ...next };
+    const ok = await run(() => api.updateChecklist(activeId, row));
+    if (ok) patch("checklists", { id: activeId, ...row });
     return ok;
+  }
+  // Cambios en la lista de tareas: siempre sobre el original, manteniendo alineadas las traducciones.
+  async function applyList(fn) {
+    const next = mapTareas(draft, fn);
+    setDraft({ ...draft, ...next });
+    await persist(next);
   }
 
   async function addTask() {
-    const t = newTask.trim();
-    if (!t || !draft) return;
-    const tareas = [...draft.tareas, t];
-    setDraft({ ...draft, tareas }); setNewTask("");
-    await persist(tareas);
+    const v = newTask.trim();
+    if (!v || !draft) return;
+    setNewTask("");
+    await applyList((arr, isTr) => [...arr, isTr ? "" : v]);
   }
-  async function removeTask(i) {
-    const tareas = draft.tareas.filter((_, idx) => idx !== i);
-    setDraft({ ...draft, tareas }); await persist(tareas);
-  }
+  const removeTask = (i) => applyList((arr) => arr.filter((_, idx) => idx !== i));
   async function move(i, dir) {
     const j = i + dir; if (j < 0 || j >= draft.tareas.length) return;
-    const tareas = [...draft.tareas]; [tareas[i], tareas[j]] = [tareas[j], tareas[i]];
-    setDraft({ ...draft, tareas }); await persist(tareas);
+    await applyList((arr) => { const a = [...arr]; [a[i], a[j]] = [a[j], a[i]]; return a; });
   }
   async function commitTask(i) {
     const v = draft.tareas[i].trim();
     if (v === active.tareas[i]) return;
     if (!v) { await removeTask(i); return; }
-    await persist(draft.tareas.map((t, idx) => (idx === i ? v : t)));
+    await persist({ tareas: draft.tareas.map((x, idx) => (idx === i ? v : x)) });
   }
   async function commitName() {
     const v = draft.nombre.trim() || active.nombre;
-    if (v !== active.nombre) await persist(draft.tareas, v);
+    if (v !== active.nombre) await persist({ nombre: v });
   }
+
+  // Traducciones: se editan aparte y no tocan el original.
+  function setTr(next) {
+    setDraft({ ...draft, traducciones: { ...draft.traducciones, [editLang]: { ...tr, ...next } } });
+  }
+  async function commitTr() {
+    const cur = JSON.stringify(draft.traducciones);
+    if (cur === JSON.stringify(active.traducciones || {})) return;
+    await persist({ traducciones: draft.traducciones });
+  }
+
   async function create() {
-    const row = await run(() => api.insertChecklist({ nombre: t("chk.newName"), tareas: [] }), { ok: t("chk.created") });
+    const row = await run(() => api.insertChecklist({ nombre: t("chk.newName"), tareas: [], traducciones: {} }), { ok: t("chk.created") });
     if (row) { patch("checklists", row); setActiveId(row.id); }
   }
   async function duplicate() {
-    const row = await run(() => api.insertChecklist({ nombre: `${active.nombre} ${t("chk.copySuffix")}`, tareas: [...active.tareas] }), { ok: t("chk.duplicated") });
+    const row = await run(() => api.insertChecklist({ nombre: `${active.nombre} ${t("chk.copySuffix")}`, tareas: [...active.tareas], traducciones: active.traducciones || {} }), { ok: t("chk.duplicated") });
     if (row) { patch("checklists", row); setActiveId(row.id); }
   }
   async function remove() {
@@ -64,6 +84,13 @@ export default function ChecklistsPage({ checklists, clients, servicios, patch }
       setActiveId(checklists.find((c) => c.id !== activeId)?.id || "");
     }
   }
+
+  const langOptions = LANGS.map((l) => {
+    if (l.id === SOURCE_LANG) return { id: l.id, label: t("chk.langSource") };
+    const cov = translationCoverage(draft, l.id);
+    return { id: l.id, label: `${l.short} ${cov.done}/${cov.total}` };
+  });
+  const langName = LANGS.find((l) => l.id === editLang)?.label;
 
   return (
     <div>
@@ -86,34 +113,64 @@ export default function ChecklistsPage({ checklists, clients, servicios, patch }
 
         {active && draft ? (
           <div className="card animate-fadeIn" style={{ marginTop: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, gap: 12, flexWrap: "wrap" }}>
-              <input className="input-base" value={draft.nombre} onChange={(e) => setDraft({ ...draft, nombre: e.target.value })} onBlur={commitName} aria-label={t("chk.nameAria")}
-                style={{ fontSize: 18, fontWeight: 700, border: "none", padding: "4px 0", background: "transparent", color: C.ink, flex: 1, minWidth: 200, fontFamily: "'Space Grotesk',sans-serif" }} />
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, gap: 12, flexWrap: "wrap" }}>
+              {translating ? (
+                <div style={{ flex: 1, minWidth: 200 }}>
+                  <p style={{ fontSize: 11.5, color: C.muted, fontWeight: 600 }}>{draft.nombre}</p>
+                  <input className="input-base" value={tr.nombre || ""} placeholder={t("chk.trNamePh", { lang: langName })} onChange={(e) => setTr({ nombre: e.target.value })} onBlur={commitTr} aria-label={t("chk.nameAria")}
+                    style={{ fontSize: 18, fontWeight: 700, border: "none", padding: "4px 0", background: "transparent", color: C.ink, width: "100%", fontFamily: "'Space Grotesk',sans-serif" }} />
+                </div>
+              ) : (
+                <input className="input-base" value={draft.nombre} onChange={(e) => setDraft({ ...draft, nombre: e.target.value })} onBlur={commitName} aria-label={t("chk.nameAria")}
+                  style={{ fontSize: 18, fontWeight: 700, border: "none", padding: "4px 0", background: "transparent", color: C.ink, flex: 1, minWidth: 200, fontFamily: "'Space Grotesk',sans-serif" }} />
+              )}
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <button className="btn-ghost btn-sm" onClick={duplicate}><Copy size={13} /> {t("chk.duplicate")}</button>
                 <button className="btn-ghost btn-sm" style={{ color: C.danger, borderColor: C.dangerBorder }} onClick={remove} aria-label={t("chk.deleteAria")}><Trash2 size={14} /></button>
               </div>
             </div>
 
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
+              <Languages size={14} color={C.muted} />
+              <Segmented value={editLang} onChange={setEditLang} options={langOptions} ariaLabel={t("chk.langEdit")} />
+              <p style={{ fontSize: 11.5, color: C.muted, flex: "1 1 240px" }}>{t("chk.trHint")}</p>
+            </div>
+
             <ol style={{ display: "flex", flexDirection: "column", gap: 8, listStyle: "none" }}>
               {draft.tareas.map((task, i) => (
                 <li key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px 8px 14px", borderRadius: 12, border: `1.5px solid ${C.borderSubtle}`, background: C.surface2 }}>
                   <span style={{ width: 26, height: 26, borderRadius: "50%", flexShrink: 0, background: C.pale, color: C.primary, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT_MONO, fontSize: 11, fontWeight: 500 }}>{i + 1}</span>
-                  <input aria-label={t("chk.taskAria", { n: i + 1 })} style={{ flex: 1, fontSize: 13, color: C.ink, border: "none", background: "transparent", minHeight: 32, minWidth: 0 }} value={task}
-                    onChange={(e) => setDraft({ ...draft, tareas: draft.tareas.map((x, idx) => (idx === i ? e.target.value : x)) })}
-                    onBlur={() => commitTask(i)} onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()} />
-                  <button className="icon-btn" aria-label={t("chk.up")} onClick={() => move(i, -1)} disabled={i === 0} style={{ width: 30, height: 30 }}><ArrowUp size={13} /></button>
-                  <button className="icon-btn" aria-label={t("chk.down")} onClick={() => move(i, 1)} disabled={i === draft.tareas.length - 1} style={{ width: 30, height: 30 }}><ArrowDown size={13} /></button>
-                  <button className="icon-btn danger" aria-label={t("chk.removeTask")} onClick={() => removeTask(i)} style={{ width: 30, height: 30 }}><X size={14} /></button>
+                  {translating ? (
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 11, color: C.muted, lineHeight: 1.3 }}>{task}</p>
+                      <input aria-label={t("chk.taskAria", { n: i + 1 })} placeholder={t("chk.trTaskPh")} style={{ width: "100%", fontSize: 13, color: C.ink, border: "none", background: "transparent", minHeight: 28 }}
+                        value={tr.tareas?.[i] || ""}
+                        onChange={(e) => { const a = draft.tareas.map((_, idx) => tr.tareas?.[idx] || ""); a[i] = e.target.value; setTr({ tareas: a }); }}
+                        onBlur={commitTr} onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()} />
+                    </div>
+                  ) : (
+                    <>
+                      <input aria-label={t("chk.taskAria", { n: i + 1 })} style={{ flex: 1, fontSize: 13, color: C.ink, border: "none", background: "transparent", minHeight: 32, minWidth: 0 }} value={task}
+                        onChange={(e) => setDraft({ ...draft, tareas: draft.tareas.map((x, idx) => (idx === i ? e.target.value : x)) })}
+                        onBlur={() => commitTask(i)} onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()} />
+                      <button className="icon-btn" aria-label={t("chk.up")} onClick={() => move(i, -1)} disabled={i === 0} style={{ width: 30, height: 30 }}><ArrowUp size={13} /></button>
+                      <button className="icon-btn" aria-label={t("chk.down")} onClick={() => move(i, 1)} disabled={i === draft.tareas.length - 1} style={{ width: 30, height: 30 }}><ArrowDown size={13} /></button>
+                      <button className="icon-btn danger" aria-label={t("chk.removeTask")} onClick={() => removeTask(i)} style={{ width: 30, height: 30 }}><X size={14} /></button>
+                    </>
+                  )}
                 </li>
               ))}
               {draft.tareas.length === 0 && <p style={{ fontSize: 12.5, color: C.muted, padding: "8px 0" }}>{t("chk.noTasks")}</p>}
             </ol>
 
-            <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
-              <input className="input-base" value={newTask} onChange={(e) => setNewTask(e.target.value)} placeholder={t("chk.newTaskPh")} onKeyDown={(e) => e.key === "Enter" && addTask()} style={{ flex: 1 }} aria-label={t("chk.newTaskAria")} />
-              <button className="btn-primary" onClick={addTask} disabled={!newTask.trim()}><Plus size={15} /> {t("common.add")}</button>
-            </div>
+            {translating ? (
+              <p style={{ fontSize: 11.5, color: C.muted, marginTop: 12 }}>{t("chk.trAddHint")}</p>
+            ) : (
+              <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+                <input className="input-base" value={newTask} onChange={(e) => setNewTask(e.target.value)} placeholder={t("chk.newTaskPh")} onKeyDown={(e) => e.key === "Enter" && addTask()} style={{ flex: 1 }} aria-label={t("chk.newTaskAria")} />
+                <button className="btn-primary" onClick={addTask} disabled={!newTask.trim()}><Plus size={15} /> {t("common.add")}</button>
+              </div>
+            )}
           </div>
         ) : (
           <div className="card" style={{ marginTop: 0, display: "flex", alignItems: "center", justifyContent: "center", color: C.muted, minHeight: 200 }}>{t("chk.select")}</div>
