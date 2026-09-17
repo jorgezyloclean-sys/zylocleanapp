@@ -17,6 +17,7 @@ import ReportsPage from "./pages/Reports.jsx";
 import ProfitabilityPage from "./pages/Profitability.jsx";
 import EmployeeView from "./pages/Employee.jsx";
 import ClientPortal from "./pages/Portal.jsx";
+import { noLeidos } from "./lib/chat";
 
 const PAGE_KEY = "zyloclean_page";
 
@@ -64,14 +65,15 @@ function AuthedApp() {
   if (data.loading && data.jobs.length === 0) return <Spinner label={t("common.loading")} />;
 
   if (profile.rol !== "admin") {
-    return <EmployeeView profile={profile} onLogout={logout} onLangChange={onLangChange} clients={data.clients} jobs={data.jobs} checklists={data.checklists} registros={data.registros} patch={data.patch} />;
+    return <EmployeeView profile={profile} onLogout={logout} onLangChange={onLangChange} clients={data.clients} jobs={data.jobs} checklists={data.checklists} registros={data.registros} mensajes={data.mensajes} staff={data.staff} patch={data.patch} />;
   }
 
   const nuevas = data.solicitudes.filter((s) => s.estado === "nueva").length;
   const incidentes = data.jobs.filter((j) => j.incidente && !j.incidente.resuelto).length;
+  const sinLeer = noLeidos(data.mensajes, profile.id).length;
 
   return (
-    <AdminShell profile={profile} onLogout={logout} onLangChange={onLangChange} page={page} setPage={setPage} badges={{ dashboard: nuevas + incidentes }}>
+    <AdminShell profile={profile} onLogout={logout} onLangChange={onLangChange} page={page} setPage={setPage} badges={{ dashboard: nuevas + incidentes, programacion: sinLeer }}>
       {data.error && <div style={{ marginBottom: 16 }}><Banner tone="danger" icon={AlertTriangle}>{t("nav.dataError", { e: data.error })} <button className="btn-ghost btn-sm" style={{ marginLeft: 8 }} onClick={data.refresh}><RefreshCw size={12} /> {t("common.retry")}</button></Banner></div>}
       {page === "dashboard" && <Dashboard {...common} goTo={setPage} />}
       {page === "clientes" && <ClientsPage {...common} />}

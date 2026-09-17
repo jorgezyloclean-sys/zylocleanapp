@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { MOCK, snapshot, subscribe } from "../dev/mock";
 
-const TABLES = ["clients", "staff", "checklists", "jobs", "servicios_contratados", "registro_horas", "solicitudes", "portal_tokens"];
+const TABLES = ["clients", "staff", "checklists", "jobs", "servicios_contratados", "registro_horas", "solicitudes", "portal_tokens", "mensajes"];
 const PK = { portal_tokens: "token" };
 
 const empty = () => Object.fromEntries(TABLES.map((t) => [t, []]));
@@ -72,7 +72,7 @@ export function useAppData(enabled) {
   return {
     clients: data.clients, staff: data.staff, checklists: data.checklists, jobs: data.jobs,
     servicios: data.servicios_contratados, registros: data.registro_horas,
-    solicitudes: data.solicitudes, portalTokens: data.portal_tokens,
+    solicitudes: data.solicitudes, portalTokens: data.portal_tokens, mensajes: data.mensajes,
     loading, error, refresh: load, patch,
   };
 }

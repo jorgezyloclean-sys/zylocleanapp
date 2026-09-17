@@ -1296,3 +1296,30 @@ button, [role="button"], a { touch-action: manipulation; }
 .brand-mark svg, .brand-wordmark svg { height: 100%; width: auto; display: block; }
 /* Sobre fondos verdes (cabeceras en modo claro) el logotipo va en blanco */
 .on-brand { --brand-dark: #FFFFFF; --brand-light: rgba(255,255,255,.75); }
+
+/* ------------------------------------------------------------ Chat por trabajo */
+.chat-bubble {
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
+  color: var(--ink);
+  border-radius: 14px 14px 14px 4px;
+  padding: 8px 11px;
+}
+.chat-bubble.mine {
+  background: var(--primary);
+  color: var(--on-primary);
+  border-color: transparent;
+  border-radius: 14px 14px 4px 14px;
+}
+.chat-bubble.mine p { color: inherit; }
+[data-theme="dark"] .chat-bubble.mine { background: var(--surface-3); color: var(--ink); border-color: var(--border); }
+.chat-del {
+  display: inline-flex; align-items: center; background: none; border: none; color: inherit; cursor: pointer;
+  opacity: 0; padding: 2px; border-radius: 4px; transition: opacity .15s;
+}
+.chat-bubble:hover .chat-del, .chat-del:focus-visible { opacity: 1; }
+@media (hover: none) { .chat-del { opacity: .6; } }
+.chat-badge {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px;
+  border-radius: 9px; background: var(--amber); color: #0A1F1A; font-size: 10.5px; font-weight: 700;
+}

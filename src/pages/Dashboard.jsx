@@ -10,7 +10,7 @@ import { updateSolicitud } from "../data/api";
 
 const ESTADOS = ["programado", "en_curso", "finalizado", "no_realizado"];
 
-export default function Dashboard({ clients, staff, jobs, checklists, registros, solicitudes, patch, profile, goTo }) {
+export default function Dashboard({ clients, staff, jobs, checklists, registros, solicitudes, mensajes = [], patch, profile, goTo }) {
   const { t, lang } = useT();
   const hoy = todayISO();
   const [filtro, setFiltro] = useState("todos");
@@ -186,7 +186,7 @@ export default function Dashboard({ clients, staff, jobs, checklists, registros,
 
       {modal?.type === "job" && (() => {
         const job = jobs.find((j) => j.id === modal.id); if (!job) return null;
-        return <JobDetailModal job={job} clients={clients} staff={staff} checklists={checklists} registros={registros} patch={patch} profile={profile} confirm={confirm} onClose={() => setModal(null)} />;
+        return <JobDetailModal job={job} clients={clients} staff={staff} checklists={checklists} registros={registros} mensajes={mensajes} patch={patch} profile={profile} confirm={confirm} onClose={() => setModal(null)} />;
       })()}
 
       {modal?.type === "onsite" && (

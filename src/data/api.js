@@ -64,6 +64,23 @@ export async function insertChecklist(row) {
 export async function updateChecklist(id, patch) { if (MOCK) return mockApi.update("checklists", id, patch); must(await supabase.from("checklists").update(patch).eq("id", id)); }
 export async function deleteChecklist(id) { if (MOCK) return mockApi.remove("checklists", id); must(await supabase.from("checklists").delete().eq("id", id)); }
 
+/* --------------------------------------------------------- mensajes (chat por trabajo) */
+export async function insertMensaje({ job_id, autor_id, texto, adjunto = null }) {
+  const data = { id: newId("m"), job_id, autor_id, texto: (texto || "").trim(), adjunto, leido_por: [autor_id], created_at: new Date().toISOString() };
+  if (MOCK) return mockApi.upsert("mensajes", data);
+  return must(await supabase.from("mensajes").insert(data).select().single());
+}
+export async function marcarLeidos(mensajes, staffId) {
+  const pend = mensajes.filter((m) => !(m.leido_por || []).includes(staffId));
+  await Promise.all(pend.map((m) => {
+    const leido_por = [...(m.leido_por || []), staffId];
+    if (MOCK) return mockApi.update("mensajes", m.id, { leido_por });
+    return supabase.from("mensajes").update({ leido_por }).eq("id", m.id);
+  }));
+  return pend.map((m) => ({ ...m, leido_por: [...(m.leido_por || []), staffId] }));
+}
+export async function deleteMensaje(id) { if (MOCK) return mockApi.remove("mensajes", id); must(await supabase.from("mensajes").delete().eq("id", id)); }
+
 /* --------------------------------------------------------- registro horas */
 export async function startRegistro(jobId, staffId) {
   if (MOCK) { const ex = mockApi.find("registro_horas", (r) => r.job_id === jobId && r.personal_id === staffId); return mockApi.upsert("registro_horas", { id: ex?.id || newId("r"), job_id: jobId, personal_id: staffId, inicio: new Date().toISOString(), fin: null }); }

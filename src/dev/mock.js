@@ -46,6 +46,7 @@ const store = {
   registro_horas: [],
   solicitudes: [{ id: "q1", cliente_id: "c3", tipo: "Limpieza profunda antes de temporada", fecha: addDays(hoy, 5), notas: "Los dos apartamentos, si puede ser el mismo día.", estado: "nueva", created_at: iso(now) }],
   portal_tokens: [{ token: "demo-token-fly-over", cliente_id: "c1", activo: true, created_at: "2026-09-01T00:00:00Z" }],
+  mensajes: [],
 };
 
 // Historial de trabajos: 3 semanas hacia atrás + hoy + mañana
@@ -81,6 +82,16 @@ function seedJobs() {
   store.jobs.push(mk({ clienteId: "c3", servicio_id: "s3", ubicacionId: "u4", empleados: ["e2"], fecha: hoy, hora: "15:00", checklistId: "t3", duracion_estimada_min: 120, monto: 18000, estado: "programado", notas: "El host deja las toallas nuevas en la entrada.", created_at: iso(now) }));
 }
 seedJobs();
+// Mensajes de ejemplo en el trabajo de hoy de Fly Over Iceland (Ana + Sigrún)
+(() => {
+  const j = store.jobs.find((x) => x.fecha === hoy && x.clienteId === "c1");
+  if (!j) return;
+  store.mensajes.push(
+    { id: "m1", job_id: j.id, autor_id: "e1", texto: "Hoy el cliente pidió que se haga primero la sala de reuniones, tienen visita a las 9.", adjunto: null, leido_por: ["e2"], created_at: iso(now - 3 * 3600000) },
+    { id: "m2", job_id: j.id, autor_id: "e2", texto: "Perfecto, empezamos por ahí.", adjunto: null, leido_por: ["e1"], created_at: iso(now - 170 * 60000) },
+    { id: "m3", job_id: j.id, autor_id: "e1", texto: "Cuando terminen, foto de la cocina por favor.", adjunto: null, leido_por: [], created_at: iso(now - 40 * 60000) },
+  );
+})();
 
 const listeners = new Set();
 export function subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); }

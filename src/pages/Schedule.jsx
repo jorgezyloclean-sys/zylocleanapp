@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Plus, FileText, CalendarDays, Pencil, Trash2, ClipboardCheck, MapPin, RefreshCw, ChevronRight, AlertTriangle } from "lucide-react";
+import { Plus, FileText, CalendarDays, Pencil, Trash2, ClipboardCheck, MapPin, RefreshCw, ChevronRight, AlertTriangle, MessageSquare } from "lucide-react";
+import { noLeidosPorJob } from "../lib/chat";
 import { Avatar, C, EmptyState, Field, Modal, PageHeader, Pill, Segmented, StarRating, StatusBadge, LiveTimer, PeriodPicker, useConfirm, Banner, FONT_DISPLAY } from "../components/ui.jsx";
 import DateField from "../components/DateField.jsx";
 import JobDetailModal from "../components/JobDetailModal.jsx";
@@ -16,14 +17,15 @@ import { serviceTypeLabel } from "../components/ClientForm.jsx";
 
 const emptyForm = (checklists) => ({ clienteId: "", servicio_id: "", ubicacionId: "", empleados: [], fecha: todayISO(), hora: "08:00", checklistId: checklists[0]?.id || "", duracion_estimada_min: "", monto: "", notas: "" });
 
-export default function SchedulePage({ clients, staff, jobs, checklists, servicios, registros, patch, profile }) {
+export default function SchedulePage({ clients, staff, jobs, checklists, servicios, registros, mensajes = [], patch, profile }) {
+  const sinLeer = noLeidosPorJob(mensajes, profile.id);
   const { t, lang } = useT();
   const [view, setView] = useState("lista");
   const [period, setPeriod] = useState(() => periodPresets().semana);
   const [filtroStaff, setFiltroStaff] = useState("");
   const [filtroCliente, setFiltroCliente] = useState("");
   const [dispatch, setDispatch] = useState(null); // {form, editId}
-  const [detailId, setDetailId] = useState(null);
+  const [detailId, setDetailId] = useState(null); // id, o { id, tab }
   const [genModal, setGenModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [confirm, confirmDialog] = useConfirm();
@@ -141,6 +143,10 @@ export default function SchedulePage({ clients, staff, jobs, checklists, servici
                     <div style={{ display: "flex", gap: 2, marginTop: 2 }}>
                       <button className="icon-btn" aria-label={t("common.edit")} onClick={() => startEdit(job)}><Pencil size={14} /></button>
                       <button className="icon-btn" aria-label={t("common.checklist")} onClick={() => setDetailId(job.id)}><ClipboardCheck size={14} /></button>
+                      <button className="icon-btn" aria-label={t("chat.title")} onClick={() => setDetailId({ id: job.id, tab: "chat" })} style={{ position: "relative" }}>
+                        <MessageSquare size={14} />
+                        {sinLeer[job.id] > 0 && <span className="chat-badge" style={{ position: "absolute", top: -5, right: -5, minWidth: 16, height: 16, fontSize: 9.5 }}>{sinLeer[job.id]}</span>}
+                      </button>
                       <button className="icon-btn danger" aria-label={t("common.delete")} onClick={() => deleteJob(job)}><Trash2 size={14} /></button>
                     </div>
                   </div>
@@ -162,10 +168,10 @@ export default function SchedulePage({ clients, staff, jobs, checklists, servici
       )}
 
       {detailId && (() => {
-        const job = jobs.find((j) => j.id === detailId);
+        const job = jobs.find((j) => j.id === (detailId.id || detailId));
         if (!job) return null;
-        return <JobDetailModal job={job} clients={clients} staff={staff} checklists={checklists} registros={registros} patch={patch} profile={profile} confirm={confirm}
-          onClose={() => setDetailId(null)} onEdit={() => startEdit(job)} onDelete={() => deleteJob(job)} />;
+        return <JobDetailModal job={job} clients={clients} staff={staff} checklists={checklists} registros={registros} mensajes={mensajes} patch={patch} profile={profile} confirm={confirm}
+          initialTab={detailId.tab || "info"} onClose={() => setDetailId(null)} onEdit={() => startEdit(job)} onDelete={() => deleteJob(job)} />;
       })()}
 
       {genModal && <GenerateModal clients={clients} staff={operativos} servicios={servicios} jobs={jobs} checklists={checklists} patch={patch} onClose={() => setGenModal(false)} />}

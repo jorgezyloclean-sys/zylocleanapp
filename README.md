@@ -48,7 +48,7 @@ src/
   dev/mock.js             datos en memoria para el modo demo
 supabase/
   migrations/             0001 baseline (estado del prototipo) → 0002 modelo v2 + auth + RLS → 0003 storage privado
-                          → 0004 traducciones de checklists
+                          → 0004 traducciones de checklists → 0005 mensajes por trabajo (chat beta)
   functions/send-email    correo por SMTP de Gmail (solo usuarios autenticados, sin contraseña en el código)
   functions/admin-users   crea / resetea / elimina usuarios de Auth del personal (solo admin)
   dev/                    reset_staging.sql y seed_staging.sql (solo para un proyecto de prueba)
@@ -71,6 +71,7 @@ scripts/
 | `checklists` | Plantillas editables. `traducciones` = `{ en: { nombre, tareas[] }, is: {...} }`: el admin carga en español y traduce por pestaña; el personal y el portal ven su idioma (lo no traducido cae al español) |
 | `portal_tokens` | Enlaces secretos del portal por cliente, revocables |
 | `solicitudes` | Pedidos que el cliente manda desde el portal |
+| `mensajes` | **Beta.** Hilo de mensajes por trabajo (admin ↔ personal asignado): texto, foto adjunta (bucket `job-photos`, `chat/<job>/…`), `leido_por`. No se edita; se borra (autor o admin). El portal no lo ve |
 
 Roles: `is_admin()` / `my_staff_id()` (funciones SQL) sobre `staff.auth_user_id = auth.uid()`.
 RLS: admin todo; operativo solo sus trabajos, los clientes de esos trabajos, su propia
@@ -83,7 +84,7 @@ campos económicos o de asignación del trabajo.
 ## Poner en marcha un proyecto Supabase
 
 1. **SQL Editor**, en orden: `0001_baseline.sql` → `0002_v2_modelo_y_seguridad.sql` →
-   `0003_storage_privado.sql` → `0004_checklists_traducciones.sql`. Sobre una base con datos del prototipo, la 0002 migra
+   `0003_storage_privado.sql` → `0004_checklists_traducciones.sql` → `0005_mensajes.sql`. Sobre una base con datos del prototipo, la 0002 migra
    (fechas `"Hoy"`/`"Mañana"` a `date`, frecuencia del cliente a servicio, horas a
    `registro_horas`, contraseñas en claro eliminadas).
 2. **Primer admin**: Authentication → Users → *Add user* (auto confirm). Luego:
@@ -125,6 +126,7 @@ Configuration poner la URL pública como *Site URL*.
 - Notificación al personal al asignar/modificar un trabajo (spec §3.3), además del aviso al cliente.
 - Cada escritura revisa el error de Supabase; nunca "guardado" sin guardar.
 - i18n es/en/is, modo oscuro, código partido en módulos, smoke test.
+- **Chat por trabajo (beta, nivel A):** pestaña *Mensajes* en el detalle del trabajo (admin) y botón *Mensajes* en la tarjeta (personal). Badge de no leídos en la tarjeta y en *Programación*. Sin notificaciones push: si la app está cerrada, no avisa.
 
 ---
 
@@ -135,6 +137,7 @@ Configuration poner la URL pública como *Site URL*.
   activo en las funciones, rotación de la anon key si se filtró, `expires_at` en tokens de portal.
 - El islandés lo tradujo Crevy: **necesita revisión de un nativo** antes de que lo use el personal.
 - Los tipos de servicio (`SERVICE_TYPES` en `ClientForm.jsx`) se guardan en español y se muestran traducidos (`svc.type.N`). Si se agrega un tipo, agregar su clave en `scripts/i18n_build.py`.
+- Chat: sin push ni canal general (nivel A). Si se quiere aviso con la app cerrada → PWA + Web Push (nivel C del plan). RLS del chat (`puede_ver_job`) a revisar por Samuel junto con el resto.
 - Checklists: la traducción es manual (pestañas EN / IS en Checklists). Traducción automática sería un paso más (API externa, costo por carácter) — no está hecha.
 - El portal no muestra fotos (los buckets son privados y el portal es anónimo). Si se quiere, va por una edge function que firme URLs contra el token.
 - Recurrencia: se genera con un botón, no con cron. Si se prefiere automático, un cron de Supabase que llame a la misma lógica.

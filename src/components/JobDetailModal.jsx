@@ -1,8 +1,10 @@
 // Detalle de un trabajo para administración: checklist, horas por persona,
 // incidente (con resolución), finalizar / no realizado / reabrir.
 import { useState } from "react";
-import { Pencil, Trash2, ClipboardCheck, CheckCheck, Clock, XCircle, Users, AlertTriangle, RotateCcw } from "lucide-react";
-import { Avatar, C, Field, Modal, ProgressBar, StarRating, StatusBadge, LiveTimer, Banner, SignedImg, PhotoLink } from "./ui.jsx";
+import { Pencil, Trash2, ClipboardCheck, CheckCheck, Clock, XCircle, Users, AlertTriangle, RotateCcw, MessageSquare, Info } from "lucide-react";
+import { Avatar, C, Field, Modal, ProgressBar, StarRating, StatusBadge, LiveTimer, Banner, SignedImg, PhotoLink, Segmented } from "./ui.jsx";
+import JobChat from "./JobChat.jsx";
+import { noLeidos } from "../lib/chat";
 import { useT } from "../i18n/index.jsx";
 import { formatFecha, formatHoraTs } from "../lib/dates";
 import { hoursLabel, minutesLabel } from "../lib/format";
@@ -11,8 +13,11 @@ import { run, toast } from "../lib/toast";
 import * as api from "../data/api";
 import { localizeChecklist } from "../lib/checklist";
 
-export default function JobDetailModal({ job, clients, staff, checklists, registros, patch, profile, onClose, onEdit, onDelete, confirm }) {
+export default function JobDetailModal({ job, clients, staff, checklists, registros, mensajes = [], patch, profile, onClose, onEdit, onDelete, confirm, initialTab = "info" }) {
   const { t, lang } = useT();
+  const [tab, setTab] = useState(initialTab);
+  const sinLeer = noLeidos(mensajes, profile.id, job.id).length;
+  const nMsgs = mensajes.filter((m) => m.job_id === job.id).length;
   const c = clients.find((cl) => cl.id === job.clienteId);
   const chk = localizeChecklist(checklists.find((ch) => ch.id === job.checklistId), lang);
   const progress = checklistPct(job, chk);
@@ -69,7 +74,14 @@ export default function JobDetailModal({ job, clients, staff, checklists, regist
             <button className="btn-primary" onClick={finalizar} disabled={busy}><CheckCheck size={14} /> {t("sch.d.finish")}</button>
           </>}
       </>}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <div style={{ marginBottom: 14 }}>
+        <Segmented value={tab} onChange={setTab} ariaLabel={t("chat.title")} options={[
+          { id: "info", label: t("chat.tabInfo"), icon: Info },
+          { id: "chat", label: <>{nMsgs ? t("chat.titleN", { n: nMsgs }) : t("chat.title")}{sinLeer > 0 && <span className="chat-badge" style={{ marginLeft: 6 }}>{sinLeer}</span>}</>, icon: MessageSquare },
+        ]} />
+      </div>
+      {tab === "chat" && <JobChat job={job} mensajes={mensajes} staff={staff} profile={profile} patch={patch} />}
+      <div style={{ display: tab === "info" ? "flex" : "none", flexDirection: "column", gap: 14 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           <StatusBadge estado={job.estado} />
           <span className="tabular" style={{ fontSize: 12, color: C.primary, fontWeight: 700 }}>{t("sch.d.pct", { p: progress })}</span>
