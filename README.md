@@ -119,7 +119,9 @@ Configuration poner la URL pública como *Site URL*.
 ## Qué cambió respecto del prototipo
 
 - Autenticación real (Supabase Auth) y RLS por rol. Fuera `usuario`/`password` de `staff`.
-- Buckets de fotos privados, URLs firmadas. Al borrar una foto se borra el archivo.
+- Buckets de fotos privados, URLs firmadas. Al borrar una foto se borra el archivo. Las fotos se
+  comprimen en el dispositivo antes de subir (1600 px, JPEG 82 %, ~150-300 KB): el plan free de
+  Supabase (1 GB) alcanza para miles de fotos en vez de ~250.
 - `jobs.fecha` es `date`; antes era texto y se guardaba `"Mañana"` literal.
 - Servicios contratados → generación de recurrentes (Programación → *Generar recurrentes*, idempotente) y rentabilidad.
 - Horas por persona; estimado vs. real; reportes por período con CSV; tareas no hechas con motivo; `no_realizado`.
@@ -140,6 +142,8 @@ Configuration poner la URL pública como *Site URL*.
 - El islandés lo tradujo Crevy: **necesita revisión de un nativo** antes de que lo use el personal.
 - Los tipos de servicio (`SERVICE_TYPES` en `ClientForm.jsx`) se guardan en español y se muestran traducidos (`svc.type.N`). Si se agrega un tipo, agregar su clave en `scripts/i18n_build.py`.
 - Datos en vivo: realtime de Supabase + respaldo (al volver a la pestaña se recarga todo; los mensajes se refrescan cada 20 s mientras la pestaña está visible). Si el realtime no llega, revisar `pg_publication_tables` (la 0006 lo deja bien).
+- **Plan de Supabase para producción:** el free se pausa a los 7 días sin actividad y no tiene
+  backups automáticos. Para operación diaria conviene Pro (USD 25/mes: 100 GB storage, backups diarios).
 - Chat: sin push ni canal general (nivel A). Si se quiere aviso con la app cerrada → PWA + Web Push (nivel C del plan). RLS del chat (`puede_ver_job`) a revisar por Samuel junto con el resto.
 - Checklists: la traducción es manual (pestañas EN / IS en Checklists). Traducción automática sería un paso más (API externa, costo por carácter) — no está hecha.
 - El portal no muestra fotos (los buckets son privados y el portal es anónimo). Si se quiere, va por una edge function que firme URLs contra el token.
