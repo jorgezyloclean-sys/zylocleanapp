@@ -96,7 +96,7 @@ seedJobs();
 const listeners = new Set();
 export function subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); }
 function emit() { listeners.forEach((fn) => fn(snapshot())); }
-export function snapshot() { return Object.fromEntries(Object.entries(store).map(([k, v]) => [k, [...v]])); }
+export function snapshot() { return { ...Object.fromEntries(Object.entries(store).map(([k, v]) => [k, [...v]])), staff_nombres: store.staff.map(({ id, nombre, rol, activo }) => ({ id, nombre, rol, activo })) }; }
 
 const PK = { portal_tokens: "token" };
 export const mockApi = {

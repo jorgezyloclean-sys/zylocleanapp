@@ -50,7 +50,7 @@ src/
   dev/mock.js             datos en memoria para el modo demo
 supabase/
   migrations/             0001 baseline (estado del prototipo) → 0002 modelo v2 + auth + RLS → 0003 storage privado
-                          → 0004 traducciones de checklists → 0005 mensajes por trabajo (chat beta)
+                          → 0004 traducciones de checklists → 0005 mensajes por trabajo (chat beta) → 0006 vista staff_nombres + publicación realtime
   functions/send-email    correo por SMTP de Gmail (solo usuarios autenticados, sin contraseña en el código)
   functions/admin-users   crea / resetea / elimina usuarios de Auth del personal (solo admin)
   dev/                    reset_staging.sql y seed_staging.sql (solo para un proyecto de prueba)
@@ -86,7 +86,7 @@ campos económicos o de asignación del trabajo.
 ## Poner en marcha un proyecto Supabase
 
 1. **SQL Editor**, en orden: `0001_baseline.sql` → `0002_v2_modelo_y_seguridad.sql` →
-   `0003_storage_privado.sql` → `0004_checklists_traducciones.sql` → `0005_mensajes.sql`. Sobre una base con datos del prototipo, la 0002 migra
+   `0003_storage_privado.sql` → `0004_checklists_traducciones.sql` → `0005_mensajes.sql` → `0006_staff_nombres.sql`. Sobre una base con datos del prototipo, la 0002 migra
    (fechas `"Hoy"`/`"Mañana"` a `date`, frecuencia del cliente a servicio, horas a
    `registro_horas`, contraseñas en claro eliminadas).
 2. **Primer admin**: Authentication → Users → *Add user* (auto confirm). Luego:
@@ -139,6 +139,7 @@ Configuration poner la URL pública como *Site URL*.
   activo en las funciones, rotación de la anon key si se filtró, `expires_at` en tokens de portal.
 - El islandés lo tradujo Crevy: **necesita revisión de un nativo** antes de que lo use el personal.
 - Los tipos de servicio (`SERVICE_TYPES` en `ClientForm.jsx`) se guardan en español y se muestran traducidos (`svc.type.N`). Si se agrega un tipo, agregar su clave en `scripts/i18n_build.py`.
+- Datos en vivo: realtime de Supabase + respaldo (al volver a la pestaña se recarga todo; los mensajes se refrescan cada 20 s mientras la pestaña está visible). Si el realtime no llega, revisar `pg_publication_tables` (la 0006 lo deja bien).
 - Chat: sin push ni canal general (nivel A). Si se quiere aviso con la app cerrada → PWA + Web Push (nivel C del plan). RLS del chat (`puede_ver_job`) a revisar por Samuel junto con el resto.
 - Checklists: la traducción es manual (pestañas EN / IS en Checklists). Traducción automática sería un paso más (API externa, costo por carácter) — no está hecha.
 - El portal no muestra fotos (los buckets son privados y el portal es anónimo). Si se quiere, va por una edge function que firme URLs contra el token.
