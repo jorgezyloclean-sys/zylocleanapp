@@ -32,8 +32,13 @@ export function useAuth() {
 
   const login = useCallback(async (email, password) => {
     if (MOCK) {
-      // demo: cualquier contraseña; el correo elige la persona (admin por defecto)
-      const s = mockApi.find("staff", (x) => x.email === email) || mockApi.profile();
+      // demo: cualquier contraseña; el correo elige la persona (admin por defecto).
+      // Vale el correo exacto o solo lo que va antes de la @ (ana@lo-que-sea → Ana).
+      const mail = (email || "").trim().toLowerCase();
+      const user = mail.split("@")[0];
+      const s = mockApi.find("staff", (x) => x.email?.toLowerCase() === mail)
+        || mockApi.find("staff", (x) => x.email?.toLowerCase().split("@")[0] === user || x.nombre.toLowerCase().split(" ")[0] === user)
+        || mockApi.profile();
       setSession({ user: { id: s.auth_user_id || "mock" }, mockStaffId: s.id }); return;
     }
     const { error } = await supabase.auth.signInWithPassword({ email, password });

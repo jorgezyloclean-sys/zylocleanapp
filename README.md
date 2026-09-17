@@ -17,8 +17,10 @@ npm install
 npm run demo        # UI con datos en memoria, sin Supabase → http://localhost:5173
 ```
 
-`npm run demo` usa `.env.demo` (`VITE_MOCK=1`). Cualquier correo entra; el correo
-elige la persona (`ana@example.com` abre la vista del personal; el resto, admin).
+`npm run demo` usa `.env.demo` (`VITE_MOCK=1`). Cualquier correo y contraseña entran; lo que
+va antes de la `@` elige la persona (`ana@…` abre la vista del personal, `sigrun@…`, `tomasz@…`;
+el resto, admin). Los datos viven en memoria de **esa pestaña**: dos navegadores no comparten
+nada. Para probar el chat entre dos personas hay que usar staging (`npm run staging`).
 
 Contra una base real:
 
