@@ -66,8 +66,8 @@ scripts/
 | Tabla | Qué es |
 |---|---|
 | `clients` | Cliente + `ubicaciones` (jsonb: dirección, contacto en sitio, acceso, notas) + fotos de referencia |
-| `servicios_contratados` | Lo contratado: tipo, frecuencia, hora, monto (mensual o por trabajo), duración estimada, personas, checklist |
-| `jobs` | Trabajo: `fecha` (date), hora, estado (`programado` → `en_curso` → `finalizado` / `no_realizado` + motivo), checklist marcado, tareas no hechas con motivo, fotos, incidente (jsonb con resolución), `recurrente_key` |
+| `servicios_contratados` | **El acuerdo comercial**, no el calendario. Lo contratado: tipo, frecuencia, hora, monto (mensual o por trabajo), duración estimada, personas, checklist |
+| `jobs` | **El trabajo operativo** que se ve en Programación y en el teléfono del personal; sale de un servicio contratado (`servicio_id`) o se despacha a mano. `fecha` (date), hora, estado (`programado` → `en_curso` → `finalizado` / `no_realizado` + motivo), checklist marcado, tareas no hechas con motivo, fotos, incidente (jsonb con resolución), `recurrente_key` |
 | `registro_horas` | Inicio/fin **por persona y trabajo** |
 | `staff` | Personal: rol (`admin` / `operativo`), idioma, `auth_user_id` (vínculo con Supabase Auth) |
 | `checklists` | Plantillas editables. `traducciones` = `{ en: { nombre, tareas[] }, is: {...} }`: el admin carga en español y traduce por pestaña; el personal y el portal ven su idioma (lo no traducido cae al español) |

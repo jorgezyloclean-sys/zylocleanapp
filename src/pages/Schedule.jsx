@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Plus, FileText, CalendarDays, Pencil, Trash2, ClipboardCheck, MapPin, RefreshCw, ChevronRight, AlertTriangle, MessageSquare } from "lucide-react";
+import { Plus, FileText, CalendarDays, Pencil, Trash2, ClipboardCheck, MapPin, RefreshCw, ChevronRight, AlertTriangle, MessageSquare, Briefcase } from "lucide-react";
 import { noLeidosPorJob } from "../lib/chat";
 import { Avatar, C, EmptyState, Field, Modal, PageHeader, Pill, Segmented, StarRating, StatusBadge, LiveTimer, PeriodPicker, useConfirm, Banner, FONT_DISPLAY } from "../components/ui.jsx";
 import DateField from "../components/DateField.jsx";
@@ -101,6 +101,7 @@ export default function SchedulePage({ clients, staff, jobs, checklists, servici
             const c = clients.find((cl) => cl.id === job.clienteId);
             const emps = (job.empleados || []).map((eid) => staff.find((s) => s.id === eid)).filter(Boolean);
             const chk = localizeChecklist(checklists.find((ch) => ch.id === job.checklistId), lang);
+            const origen = servicios.find((sv) => sv.id === job.servicio_id);
             const loc = c?.ubicaciones?.find((u) => u.id === job.ubicacionId);
             const abiertos = registros.filter((r) => r.job_id === job.id && !r.fin);
             const hrs = jobHoras(job, registros);
@@ -153,6 +154,9 @@ export default function SchedulePage({ clients, staff, jobs, checklists, servici
                     </div>
                   </div>
                   <p style={{ fontSize: 11, color: C.muted }}>{chk?.nombre || t("sch.noChecklist")}{abiertos.length ? ` · ${t("sch.onsite", { n: abiertos.length })}` : ""}</p>
+                  <p style={{ fontSize: 10.5, color: C.muted2, display: "flex", alignItems: "center", gap: 4, justifyContent: "flex-end" }}>
+                    {origen ? <><Briefcase size={10} /> {t("sch.fromService", { svc: serviceTypeLabel(origen.tipo_servicio, t) })}</> : <><Plus size={10} /> {t("sch.manual")}</>}
+                  </p>
                 </div>
               </div>
             );
