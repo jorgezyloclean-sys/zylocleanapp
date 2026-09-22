@@ -17,8 +17,10 @@ import { serviceTypeLabel } from "../components/ClientForm.jsx";
 
 const emptyForm = (checklists) => ({ clienteId: "", servicio_id: "", ubicacionId: "", empleados: [], fecha: todayISO(), hora: "08:00", checklistId: checklists[0]?.id || "", duracion_estimada_min: "", monto: "", notas: "" });
 
-export default function SchedulePage({ clients, staff, jobs, checklists, servicios, registros, mensajes = [], patch, profile }) {
+export default function SchedulePage({ clients, staff, jobs, checklists, servicios, registros, mensajes = [], portalTokens = [], patch, profile }) {
   const sinLeer = noLeidosPorJob(mensajes, profile.id);
+  // Enlace del portal para que el correo al cliente lleve el botón de seguimiento.
+  const tokenDe = (clienteId) => portalTokens.find((tk) => tk.cliente_id === clienteId && tk.activo)?.token || null;
   const { t, lang } = useT();
   const [view, setView] = useState("lista");
   const [period, setPeriod] = useState(() => periodPresets().semana);
@@ -59,7 +61,7 @@ export default function SchedulePage({ clients, staff, jobs, checklists, servici
     emailJobToStaff({ client, job: saved, assignedStaff: assigned, ubicacion: ubic, modificado: !!dispatch.editId })
       .then(({ sent, total }) => { if (total) toast(t("sch.notified", { a: sent, b: total }), sent === total ? "info" : "error"); })
       .catch((e) => toast(t("sch.notifyErr", { e: e.message }), "error"));
-    if (!dispatch.editId && client?.email) emailJobAssignedToClient({ client, job: saved, assignedStaff: assigned }).catch(() => {});
+    if (!dispatch.editId && client?.email) emailJobAssignedToClient({ client, job: saved, assignedStaff: assigned, portalToken: tokenDe(client.id) }).catch(() => {});
   }
 
   async function deleteJob(job) {

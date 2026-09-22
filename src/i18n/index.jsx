@@ -22,6 +22,19 @@ export function detectLang() {
   return DICTS[nav] ? nav : "es";
 }
 
+/** Traduce fuera de React (correos): `tr("es")("clave", vars)`. */
+export function tr(lang) {
+  const dict = DICTS[lang] || es;
+  return (key, vars) => {
+    let out = dict[key] ?? es[key] ?? key;
+    if (vars) {
+      if (vars.n === 1 && (dict[`${key}_one`] ?? es[`${key}_one`])) out = dict[`${key}_one`] ?? es[`${key}_one`];
+      out = out.replace(/\{(\w+)\}/g, (_, k) => (vars[k] ?? `{${k}}`));
+    }
+    return out;
+  };
+}
+
 const I18nCtx = createContext({ lang: "es", setLang: () => {}, t: (k) => k });
 
 export function I18nProvider({ children, initial }) {

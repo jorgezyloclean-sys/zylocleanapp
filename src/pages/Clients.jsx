@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import {
   Plus, Search, Pencil, Trash2, Activity, FileText, MapPin, ImageIcon, History, Link2, Copy, Ban,
-  ShieldOff, Briefcase, Building2, ExternalLink,
+  ShieldOff, Briefcase, Building2, ExternalLink, Mail,
 } from "lucide-react";
 import {
   Avatar, C, EmptyState, Modal, PageHeader, Pill, Segmented, StarRating, StatusBadge, PhotoLink, SignedImg, useConfirm, Banner,
@@ -11,12 +11,13 @@ import { localizeChecklist } from "../lib/checklist";
 import ServicioForm from "../components/ServicioForm.jsx";
 import { FrequencyBadge, frecuenciaLabel } from "../components/FrequencyField.jsx";
 import { tipoFotoLabel } from "../components/PhotosField.jsx";
-import { useT } from "../i18n/index.jsx";
+import { useT, LANGS } from "../i18n/index.jsx";
 import { formatFecha } from "../lib/dates";
 import { hoursLabel, minutesLabel, money } from "../lib/format";
 import { avgRating, jobHoras, jobsForClient, tasaFinalizados } from "../lib/stats";
 import { run, toast } from "../lib/toast";
 import * as api from "../data/api";
+import { emailPortalLink, portalUrl } from "../email/templates";
 
 export default function ClientsPage({ clients, staff, jobs, checklists, servicios, registros, portalTokens, patch }) {
   const { t, lang } = useT();
@@ -159,7 +160,8 @@ function ClientDetailModal({ client, onClose, onEdit, onDelete, jobs, staff, che
 
   const cJobs = useMemo(() => jobsForClient(jobs, client.id).sort((a, b) => (b.fecha + b.hora).localeCompare(a.fecha + a.hora)), [jobs, client.id]);
   const svc = servicios.filter((s) => s.cliente_id === client.id);
-  const tokens = portalTokens.filter((t) => t.cliente_id === client.id && t.activo);
+  const tokens = portalTokens.filter((tk) => tk.cliente_id === client.id && tk.activo);
+  const [sending, setSending] = useState(false);
   const ubicaciones = Array.isArray(client.ubicaciones) ? client.ubicaciones : [];
   const horasTotales = cJobs.reduce((s, j) => s + jobHoras(j, registros), 0);
 
@@ -174,14 +176,21 @@ function ClientDetailModal({ client, onClose, onEdit, onDelete, jobs, staff, che
     if (await run(() => api.deleteServicio(s.id), { ok: t("cli.svcDeleted") })) patch("servicios_contratados", s, true);
   }
   async function crearToken() {
-    const t = await run(() => api.createPortalToken(client.id), { ok: t("cli.linkCreated") });
-    if (t) patch("portal_tokens", t);
+    const row = await run(() => api.createPortalToken(client.id), { ok: t("cli.linkCreated") });
+    if (row) patch("portal_tokens", row);
   }
-  async function revocar(t) {
-    if (await run(() => api.revokePortalToken(t.token), { ok: t("cli.linkDisabled") })) patch("portal_tokens", { ...t, activo: false });
+  async function revocar(tk) {
+    if (await run(() => api.revokePortalToken(tk.token), { ok: t("cli.linkDisabled") })) patch("portal_tokens", { ...tk, activo: false });
   }
-  function copiar(t) {
-    const link = `${window.location.origin}/?portal=${t.token}`;
+  // Manda el enlace del portal por correo, en el idioma del cliente (pedido 18/09).
+  async function enviarPortal(tk) {
+    if (!client.email) { toast(t("cli.noEmail"), "error"); return; }
+    setSending(true);
+    await run(() => emailPortalLink({ client, url: portalUrl(tk.token) }), { ok: t("cli.linkSent", { email: client.email }) });
+    setSending(false);
+  }
+  function copiar(tk) {
+    const link = portalUrl(tk.token);
     navigator.clipboard?.writeText(link).then(() => toast(t("cli.linkCopied"))).catch(() => toast(link, "info"));
   }
   async function anonimizar() {
@@ -194,7 +203,7 @@ function ClientDetailModal({ client, onClose, onEdit, onDelete, jobs, staff, che
   }
 
   const rows = [
-    [t("cli.f.tipo"), clientTipoLabel(client.tipo, t)], [t("cli.f.rubro"), client.rubro], [t("cli.f.servicio"), serviceTypeLabel(client.servicio, t)],
+    [t("cli.f.tipo"), clientTipoLabel(client.tipo, t)], [t("cli.f.rubro"), client.rubro], [t("cli.f.servicio"), serviceTypeLabel(client.servicio, t)], [t("cli.f.idioma"), LANGS.find((l) => l.id === (client.idioma || "es"))?.label],
     [t("cli.f.kennitala"), client.kennitala], [t("cli.f.m2"), client.m2 ? `${client.m2} m²` : null], [t("cli.f.email"), client.email], [t("cli.f.phone"), client.telefono],
     [t("cli.f.contact"), client.contactoHabitual], [t("cli.f.emergency"), client.contactoEmergencia], [t("cli.f.access"), client.acceso],
     [t("cli.f.products"), client.productos], [t("cli.f.discretion"), client.discrecion], [t("cli.f.wifi"), client.wifi],
@@ -343,6 +352,7 @@ function ClientDetailModal({ client, onClose, onEdit, onDelete, jobs, staff, che
               <code style={{ flex: 1, fontSize: 11, color: C.muted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>…?portal={tk.token.slice(0, 10)}…</code>
               <span style={{ fontSize: 11, color: C.muted2 }}>{formatFecha(tk.created_at?.slice(0, 10), lang)}</span>
               <button className="btn-ghost btn-sm" onClick={() => copiar(tk)}><Copy size={12} /> {t("cli.copy")}</button>
+              <button className="btn-ghost btn-sm" onClick={() => enviarPortal(tk)} disabled={sending || !client.email} title={client.email || t("cli.noEmail")}><Mail size={12} /> {t("cli.sendByEmail")}</button>
               <button className="btn-ghost btn-sm" style={{ color: C.danger }} onClick={() => revocar(tk)}><Ban size={12} /> {t("cli.deactivate")}</button>
             </div>
           ))}

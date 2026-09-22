@@ -11,11 +11,11 @@ const iso = (d) => new Date(d).toISOString();
 
 const store = {
   clients: [
-    { id: "c1", nombre: "Fly Over Iceland", tipo: "empresa", rubro: "Entretenimiento", servicio: "Limpieza comercial / oficinas", estado: "activo", formal: true, email: "ops@flyover.is", telefono: "+354 555 0101", kennitala: "520199-2340", m2: "800", acceso: "Recepción", wifi: "FOI-Guest / island2026", productos: "Solo ecológicos", discrecion: "Sala VIP cerrada", notas: "Cliente principal.", checklistId: "t1",
+    { id: "c1", nombre: "Fly Over Iceland", idioma: "es", tipo: "empresa", rubro: "Entretenimiento", servicio: "Limpieza comercial / oficinas", estado: "activo", formal: true, email: "ops@flyover.is", telefono: "+354 555 0101", kennitala: "520199-2340", m2: "800", acceso: "Recepción", wifi: "FOI-Guest / island2026", productos: "Solo ecológicos", discrecion: "Sala VIP cerrada", notas: "Cliente principal.", checklistId: "t1",
       ubicaciones: [{ id: "u1", direccion: "Fiskislóð 43, 101 Reykjavík", mapsLink: "https://maps.app.goo.gl/x", contacto: "Anna · 555 0102", acceso: "Código puerta 4471, llave en caja", notas: "Vitrina de cristal en el hall: no apoyar nada." }], fotosReferencia: [] },
-    { id: "c2", nombre: "Kaffi Vínyl", tipo: "local", rubro: "Gastronomía", servicio: "Limpieza de locales / retail", estado: "activo", formal: true, email: "", telefono: "", kennitala: "", m2: "120", acceso: "Llave", checklistId: "t2",
+    { id: "c2", nombre: "Kaffi Vínyl", idioma: "is", tipo: "local", rubro: "Gastronomía", servicio: "Limpieza de locales / retail", estado: "activo", formal: true, email: "", telefono: "", kennitala: "", m2: "120", acceso: "Llave", checklistId: "t2",
       ubicaciones: [{ id: "u2", direccion: "Hverfisgata 76, 101 Reykjavík", mapsLink: "", contacto: "Jón · 555 0201", acceso: "Llave en ZyloClean", notas: "Cerrar el gas de la cocina al salir." }], fotosReferencia: [] },
-    { id: "c3", nombre: "Apartamentos Laugavegur", tipo: "domicilio", rubro: "Alquiler temporario", servicio: "Renta de corta estancia (Airbnb)", estado: "activo", formal: false, email: "host@lauga.is", checklistId: "t3", m2: "60",
+    { id: "c3", nombre: "Apartamentos Laugavegur", idioma: "en", tipo: "domicilio", rubro: "Alquiler temporario", servicio: "Renta de corta estancia (Airbnb)", estado: "activo", formal: false, email: "host@lauga.is", checklistId: "t3", m2: "60",
       ubicaciones: [{ id: "u3", direccion: "Laugavegur 12, 2B", mapsLink: "", contacto: "Host", acceso: "Lockbox 1990", notas: "Cambiar sábanas; toallas en el armario." }, { id: "u4", direccion: "Laugavegur 12, 3A", mapsLink: "", contacto: "Host", acceso: "Lockbox 1991", notas: "" }], fotosReferencia: [] },
   ],
   staff: [
@@ -117,7 +117,7 @@ export const mockApi = {
     const t = store.portal_tokens.find((x) => x.token === token && x.activo); if (!t) return null;
     const c = store.clients.find((x) => x.id === t.cliente_id);
     return {
-      client: { id: c.id, nombre: c.nombre, ubicaciones: c.ubicaciones.map((u) => ({ id: u.id, direccion: u.direccion })) },
+      client: { id: c.id, nombre: c.nombre, idioma: c.idioma || "es", ubicaciones: c.ubicaciones.map((u) => ({ id: u.id, direccion: u.direccion })) },
       jobs: store.jobs.filter((j) => j.clienteId === c.id).sort((a, b) => (b.fecha + b.hora).localeCompare(a.fecha + a.hora)).map((j) => ({ ...j, incidente: j.incidente ? { texto: j.incidente.texto } : null, empleados: j.empleados.map((e) => { const s = store.staff.find((x) => x.id === e); return { id: e, nombre: s?.nombre || "?", idiomas: s?.idiomas || [] }; }) })),
       checklists: store.checklists,
     };

@@ -156,7 +156,14 @@ export function exportStaffData({ staff, jobs, registros, clients }) {
 /* ------------------------------------------------------------------ email */
 export async function sendNotificationEmail({ to, subject, html, type = "general" }) {
   if (!to) return false;
-  if (MOCK) { console.info(`[demo] email ${type} → ${to}: ${subject}`); return true; }
+  if (MOCK) {
+    // En demo no se manda nada: se guarda para poder mirar el correo tal como se vería.
+    console.info(`[demo] email ${type} → ${to}: ${subject}`);
+    if (typeof window !== "undefined") {
+      window.__demoEmails = [{ to, subject, html, type, at: new Date().toISOString() }, ...(window.__demoEmails || [])].slice(0, 20);
+    }
+    return true;
+  }
   const { data, error } = await supabase.functions.invoke("send-email", { body: { to, subject, html, type } });
   if (error) throw new Error(/Failed to send a request/i.test(error.message) ? "La función send-email no está desplegada en este proyecto de Supabase." : error.message);
   if (data?.error) throw new Error(data.error);

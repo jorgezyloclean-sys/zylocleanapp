@@ -19,14 +19,21 @@ const STEPS = [
 ];
 
 export default function ClientPortal({ token }) {
-  const { t, lang } = useT();
+  const { t, lang, setLang } = useT();
   const [data, setData] = useState(undefined);
   const timer = useRef(null);
+  const applied = useRef(false); // el idioma del cliente se aplica una vez; después manda su elección
 
   async function load() {
     try { const d = await api.portalGet(token); setData(d ?? null); } catch { setData((prev) => prev ?? null); }
   }
   useEffect(() => { load(); timer.current = setInterval(load, 20000); return () => clearInterval(timer.current); }, [token]);
+
+  // Abre en el idioma que administración le cargó al cliente (0007).
+  useEffect(() => {
+    const idioma = data?.client?.idioma;
+    if (!applied.current && idioma) { applied.current = true; setLang(idioma); }
+  }, [data?.client?.idioma, setLang]);
 
   if (data === undefined) return <div style={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", color: C.muted, background: C.bg }}>{t("common.loading")}</div>;
   if (data === null) return (

@@ -20,7 +20,7 @@ import { localizeChecklists } from "../lib/checklist";
 import JobChat from "../components/JobChat.jsx";
 import { noLeidosPorJob } from "../lib/chat";
 
-export default function EmployeeView({ profile, onLogout, onLangChange, clients, jobs, checklists: rawChecklists, registros, mensajes = [], staff = [], patch }) {
+export default function EmployeeView({ profile, onLogout, onLangChange, clients, jobs, checklists: rawChecklists, registros, mensajes = [], staff = [], portalTokens = [], patch }) {
   const { t, lang } = useT();
   const checklists = useMemo(() => localizeChecklists(rawChecklists, lang), [rawChecklists, lang]);
   const sinLeer = useMemo(() => noLeidosPorJob(mensajes, profile.id), [mensajes, profile.id]);
@@ -113,7 +113,7 @@ export default function EmployeeView({ profile, onLogout, onLangChange, clients,
       )}
       {modal?.type === "incidente" && <IncidentModal job={modal.job} client={clients.find((c) => c.id === modal.job.clienteId)} patch={patch} onClose={() => setModal(null)} />}
       {modal?.type === "no_realizado" && <NotDoneModal job={modal.job} me={me} registros={registros} patch={patch} onClose={() => setModal(null)} />}
-      {modal?.type === "finish" && <FinishModal job={jobs.find((j) => j.id === modal.job.id) || modal.job} me={me} checklist={checklists.find((c) => c.id === modal.job.checklistId)} client={clients.find((c) => c.id === modal.job.clienteId)} registros={registros} patch={patch} onClose={() => setModal(null)} />}
+      {modal?.type === "finish" && <FinishModal job={jobs.find((j) => j.id === modal.job.id) || modal.job} me={me} checklist={checklists.find((c) => c.id === modal.job.checklistId)} client={clients.find((c) => c.id === modal.job.clienteId)} portalToken={portalTokens.find((tk) => tk.cliente_id === modal.job.clienteId && tk.activo)?.token || null} registros={registros} patch={patch} onClose={() => setModal(null)} />}
     </div>
   );
 }
@@ -320,7 +320,7 @@ function JobCard({ job, me, client, checklist, registros, patch, dayLabel, delay
 }
 
 /* =================================================== Terminar (con motivos) */
-function FinishModal({ job, me, checklist, client, registros, patch, onClose }) {
+function FinishModal({ job, me, checklist, client, portalToken, registros, patch, onClose }) {
   const { t } = useT();
   const pendientes = (checklist?.tareas || []).map((task, i) => ({ i, task })).filter(({ i }) => !job.tareasCompletadas?.[i]);
   const [motivos, setMotivos] = useState(() => Object.fromEntries(pendientes.map(({ i }) => [i, job.tareas_no_hechas?.[i] || ""])));
@@ -343,7 +343,7 @@ function FinishModal({ job, me, checklist, client, registros, patch, onClose }) 
     patch("jobs", saved);
     onClose();
     if (!otrosAbiertos && client?.email) {
-      emailJobCompleted({ client, job: saved, horasLabel: hoursLabel(jobHoras(saved, [...registros.filter((x) => x.id !== r.id), r])) }).catch(() => {});
+      emailJobCompleted({ client, job: saved, portalToken, horasLabel: hoursLabel(jobHoras(saved, [...registros.filter((x) => x.id !== r.id), r])) }).catch(() => {});
     }
   }
 

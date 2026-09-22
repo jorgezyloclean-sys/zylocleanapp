@@ -4,7 +4,7 @@ import LocationsField from "./LocationsField.jsx";
 import PhotosField from "./PhotosField.jsx";
 import { formatKennitala } from "../lib/format";
 import { newId } from "../lib/ids";
-import { useT } from "../i18n/index.jsx";
+import { useT, LANGS } from "../i18n/index.jsx";
 import { localizeChecklist } from "../lib/checklist";
 
 export const SERVICE_TYPES = [
@@ -24,7 +24,7 @@ export const clientTipoLabel = (tipo, t) => t(`cli.tipo.${CLIENT_TIPOS.includes(
 
 export function emptyClient() {
   return {
-    id: newId("c"), nombre: "", tipo: "empresa", rubro: "", servicio: SERVICE_TYPES[0],
+    id: newId("c"), nombre: "", tipo: "empresa", rubro: "", servicio: SERVICE_TYPES[0], idioma: "es",
     ubicaciones: [{ id: newId("u"), direccion: "", mapsLink: "", contacto: "", acceso: "", notas: "" }],
     contactoHabitual: "", contactoEmergencia: "", email: "", telefono: "", acceso: "", productos: "",
     discrecion: "", wifi: "", m2: "", estado: "activo", formal: true, kennitala: "", fotosReferencia: [],
@@ -70,6 +70,13 @@ export default function ClientForm({ initial, onSave, onCancel, checklists, savi
           <input type="email" inputMode="email" className="input-base" value={form.email || ""} onChange={set("email")} placeholder="cliente@ejemplo.com" />
         </Field>
         <Field label={t("cli.f.phone")}><input type="tel" inputMode="tel" className="input-base" value={form.telefono || ""} onChange={set("telefono")} /></Field>
+      </div>
+      <div className="form-grid-2">
+        <Field label={t("cli.f.idioma")} hint={t("cli.f.idiomaHint")}>
+          <select className="input-base" value={form.idioma || "es"} onChange={set("idioma")}>
+            {LANGS.map((l) => <option key={l.id} value={l.id}>{l.label}</option>)}
+          </select>
+        </Field>
       </div>
       <div className="form-grid-2">
         <Field label={t("cli.f.kennitala")} hint={t("cf.kennitalaHint")}>

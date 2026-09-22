@@ -46,11 +46,11 @@ src/
   lib/                    dates, format, stats (horas, cumplimiento, rentabilidad), recurrencia,
                           csv, storage (URLs firmadas), theme, toast
   i18n/                   es.js / en.js / is.js — GENERADOS por scripts/i18n_build.py
-  email/templates.js      correos (personal y cliente)
+  email/templates.js      correos (personal y cliente), cada uno en el idioma del destinatario
   dev/mock.js             datos en memoria para el modo demo
 supabase/
   migrations/             0001 baseline (estado del prototipo) → 0002 modelo v2 + auth + RLS → 0003 storage privado
-                          → 0004 traducciones de checklists → 0005 mensajes por trabajo (chat beta) → 0006 vista staff_nombres + publicación realtime
+                          → 0004 traducciones de checklists → 0005 mensajes por trabajo (chat beta) → 0006 vista staff_nombres + publicación realtime → 0007 idioma del cliente
   functions/send-email    correo por SMTP de Gmail (solo usuarios autenticados, sin contraseña en el código)
   functions/admin-users   crea / resetea / elimina usuarios de Auth del personal (solo admin)
   dev/                    reset_staging.sql y seed_staging.sql (solo para un proyecto de prueba)
@@ -71,7 +71,7 @@ scripts/
 | `registro_horas` | Inicio/fin **por persona y trabajo** |
 | `staff` | Personal: rol (`admin` / `operativo`), idioma, `auth_user_id` (vínculo con Supabase Auth) |
 | `checklists` | Plantillas editables. `traducciones` = `{ en: { nombre, tareas[] }, is: {...} }`: el admin carga en español y traduce por pestaña; el personal y el portal ven su idioma (lo no traducido cae al español) |
-| `portal_tokens` | Enlaces secretos del portal por cliente, revocables |
+| `portal_tokens` | Enlaces secretos del portal por cliente, revocables. Se pueden mandar por correo desde la ficha |
 | `solicitudes` | Pedidos que el cliente manda desde el portal |
 | `mensajes` | **Beta.** Hilo de mensajes por trabajo (admin ↔ personal asignado): texto, foto adjunta (bucket `job-photos`, `chat/<job>/…`), `leido_por`. No se edita; se borra (autor o admin). El portal no lo ve |
 
@@ -86,7 +86,7 @@ campos económicos o de asignación del trabajo.
 ## Poner en marcha un proyecto Supabase
 
 1. **SQL Editor**, en orden: `0001_baseline.sql` → `0002_v2_modelo_y_seguridad.sql` →
-   `0003_storage_privado.sql` → `0004_checklists_traducciones.sql` → `0005_mensajes.sql` → `0006_staff_nombres.sql`. Sobre una base con datos del prototipo, la 0002 migra
+   `0003_storage_privado.sql` → `0004_checklists_traducciones.sql` → `0005_mensajes.sql` → `0006_staff_nombres.sql` → `0007_idioma_cliente.sql`. Sobre una base con datos del prototipo, la 0002 migra
    (fechas `"Hoy"`/`"Mañana"` a `date`, frecuencia del cliente a servicio, horas a
    `registro_horas`, contraseñas en claro eliminadas).
 2. **Primer admin**: Authentication → Users → *Add user* (auto confirm). Luego:
@@ -128,6 +128,7 @@ Configuration poner la URL pública como *Site URL*.
 - Incidentes como sub-registro del trabajo, con resolución (quién, cuándo, nota) e historial.
 - Portal por token revocable; "solicitar servicio" ahora guarda de verdad.
 - Notificación al personal al asignar/modificar un trabajo (spec §3.3), además del aviso al cliente.
+- Correos en el idioma del destinatario (`clients.idioma` / `staff.idioma`), con botón: el cliente va a su portal, el personal a la app. El enlace del portal también se manda a pedido desde Clientes → ficha → Portal → *Enviar por correo*.
 - Cada escritura revisa el error de Supabase; nunca "guardado" sin guardar.
 - i18n es/en/is, modo oscuro, código partido en módulos, smoke test.
 - **Chat por trabajo (beta, nivel A):** pestaña *Mensajes* en el detalle del trabajo (admin) y botón *Mensajes* en la tarjeta (personal). Badge de no leídos en la tarjeta y en *Programación*. Sin notificaciones push: si la app está cerrada, no avisa.
