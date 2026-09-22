@@ -7,13 +7,15 @@ import { SERVICE_TYPES, serviceTypeLabel } from "./ClientForm.jsx";
 import { todayISO } from "../lib/dates";
 import { useT } from "../i18n/index.jsx";
 import { localizeChecklist } from "../lib/checklist";
+import { MOTIVOS, conRecargo, recargosVacios } from "../lib/tarifas";
+import { money } from "../lib/format";
 
 export function emptyServicio(client) {
   return {
     cliente_id: client.id, ubicacion_id: client.ubicaciones?.[0]?.id || null,
     tipo_servicio: client.servicio || SERVICE_TYPES[0],
     frecuencia: { tipo: "semanal", dias: [], diaDelMes: "", desde: todayISO(), notas: "" },
-    hora: "08:00", monto_acordado: "", tipo_monto: "mensual", moneda: "ISK",
+    hora: "08:00", monto_acordado: "", tipo_monto: "mensual", moneda: "ISK", recargos: recargosVacios(),
     duracion_estimada_min: 120, personas_previstas: 1, checklist_id: client.checklistId || null, activo: true, notas: "",
   };
 }
@@ -40,6 +42,7 @@ export default function ServicioForm({ client, initial, checklists, onSave, onCa
       personas_previstas: Number(form.personas_previstas) || 1,
       checklist_id: form.checklist_id || null,
       ubicacion_id: form.ubicacion_id || null,
+      recargos: Object.fromEntries(MOTIVOS.map((m) => [m, Number(form.recargos?.[m]) || 0])),
     });
   }
 
@@ -84,6 +87,31 @@ export default function ServicioForm({ client, initial, checklists, onSave, onCa
           <Field label={t("sf.currency")}>
             <select className="input-base" value={form.moneda} onChange={set("moneda")}><option>ISK</option><option>EUR</option><option>USD</option></select>
           </Field>
+        </div>
+
+        {/* Recargos: solo tienen sentido sobre un monto por trabajo. */}
+        <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${C.borderSubtle}` }}>
+          <p style={{ fontSize: 12.5, fontWeight: 700, color: C.ink }}>{t("sf.surcharges")}</p>
+          <p style={{ fontSize: 11.5, color: C.muted, marginTop: 2, marginBottom: 10 }}>
+            {form.tipo_monto === "por_trabajo" ? t("sf.surchargesHint") : t("sf.surchargesMonthly")}
+          </p>
+          {form.tipo_monto === "por_trabajo" && (
+            <div className="form-grid-3">
+              {MOTIVOS.map((m) => (
+                <Field key={m} label={t(`sf.sur.${m}`)} hint={t(`sf.sur.${m}Hint`)}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <input type="number" min={0} max={500} step="any" inputMode="decimal" className="input-base tabular" style={{ width: 80 }}
+                      value={form.recargos?.[m] ?? 0}
+                      onChange={(e) => setForm({ ...form, recargos: { ...recargosVacios(), ...form.recargos, [m]: e.target.value } })} />
+                    <span style={{ fontSize: 13, color: C.muted }}>%</span>
+                    <span className="tabular" style={{ fontSize: 12, color: Number(form.recargos?.[m]) > 0 ? C.primary : C.muted2, fontWeight: 600 }}>
+                      → {money(conRecargo(form.monto_acordado, form.recargos?.[m]), form.moneda, lang)}
+                    </span>
+                  </div>
+                </Field>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

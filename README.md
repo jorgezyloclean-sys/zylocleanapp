@@ -43,14 +43,15 @@ src/
                           Checklists, Reports, Profitability, Employee, Portal, Login)
   components/             UI compartida (ui.jsx), formularios, JobDetailModal, DateField
   data/                   useAuth (sesión + perfil), useAppData (carga + realtime), api (escrituras)
-  lib/                    dates, format, stats (horas, cumplimiento, rentabilidad), recurrencia,
+  lib/                    dates, feriados (Islandia, calculados), tarifas (recargos),
+                          format, stats (horas, cumplimiento, rentabilidad, costo por persona), recurrencia,
                           csv, storage (URLs firmadas), theme, toast
   i18n/                   es.js / en.js / is.js — GENERADOS por scripts/i18n_build.py
   email/templates.js      correos (personal y cliente), cada uno en el idioma del destinatario
   dev/mock.js             datos en memoria para el modo demo
 supabase/
   migrations/             0001 baseline (estado del prototipo) → 0002 modelo v2 + auth + RLS → 0003 storage privado
-                          → 0004 traducciones de checklists → 0005 mensajes por trabajo (chat beta) → 0006 vista staff_nombres + publicación realtime → 0007 idioma del cliente
+                          → 0004 traducciones de checklists → 0005 mensajes por trabajo (chat beta) → 0006 vista staff_nombres + publicación realtime → 0007 idioma del cliente → 0008 recargos, costo por hora y recursos
   functions/send-email    correo por SMTP de Gmail (solo usuarios autenticados, sin contraseña en el código)
   functions/admin-users   crea / resetea / elimina usuarios de Auth del personal (solo admin)
   dev/                    reset_staging.sql y seed_staging.sql (solo para un proyecto de prueba)
@@ -66,13 +67,14 @@ scripts/
 | Tabla | Qué es |
 |---|---|
 | `clients` | Cliente + `ubicaciones` (jsonb: dirección, contacto en sitio, acceso, notas) + fotos de referencia |
-| `servicios_contratados` | **El acuerdo comercial**, no el calendario. Lo contratado: tipo, frecuencia, hora, monto (mensual o por trabajo), duración estimada, personas, checklist |
+| `servicios_contratados` | **El acuerdo comercial**, no el calendario. `recargos` = % por fin de semana / feriado / nocturno sobre el monto por trabajo. Lo contratado: tipo, frecuencia, hora, monto (mensual o por trabajo), duración estimada, personas, checklist |
 | `jobs` | **El trabajo operativo** que se ve en Programación y en el teléfono del personal; sale de un servicio contratado (`servicio_id`) o se despacha a mano. `fecha` (date), hora, estado (`programado` → `en_curso` → `finalizado` / `no_realizado` + motivo), checklist marcado, tareas no hechas con motivo, fotos, incidente (jsonb con resolución), `recurrente_key` |
 | `registro_horas` | Inicio/fin **por persona y trabajo** |
-| `staff` | Personal: rol (`admin` / `operativo`), idioma, `auth_user_id` (vínculo con Supabase Auth) |
+| `staff` | Personal: rol (`admin` / `operativo`), idioma, `costo_hora` (para estimar pagos), `auth_user_id` (vínculo con Supabase Auth) |
 | `checklists` | Plantillas editables. `traducciones` = `{ en: { nombre, tareas[] }, is: {...} }`: el admin carga en español y traduce por pestaña; el personal y el portal ven su idioma (lo no traducido cae al español) |
 | `portal_tokens` | Enlaces secretos del portal por cliente, revocables. Se pueden mandar por correo desde la ficha |
 | `solicitudes` | Pedidos que el cliente manda desde el portal |
+| `recursos` | Vehículos y máquinas. `jobs.recursos` guarda qué se llevó cada trabajo |
 | `mensajes` | **Beta.** Hilo de mensajes por trabajo (admin ↔ personal asignado): texto, foto adjunta (bucket `job-photos`, `chat/<job>/…`), `leido_por`. No se edita; se borra (autor o admin). El portal no lo ve |
 
 Roles: `is_admin()` / `my_staff_id()` (funciones SQL) sobre `staff.auth_user_id = auth.uid()`.
@@ -86,7 +88,7 @@ campos económicos o de asignación del trabajo.
 ## Poner en marcha un proyecto Supabase
 
 1. **SQL Editor**, en orden: `0001_baseline.sql` → `0002_v2_modelo_y_seguridad.sql` →
-   `0003_storage_privado.sql` → `0004_checklists_traducciones.sql` → `0005_mensajes.sql` → `0006_staff_nombres.sql` → `0007_idioma_cliente.sql`. Sobre una base con datos del prototipo, la 0002 migra
+   `0003_storage_privado.sql` → `0004_checklists_traducciones.sql` → `0005_mensajes.sql` → `0006_staff_nombres.sql` → `0007_idioma_cliente.sql` → `0008_tarifas_recursos_costo.sql`. Sobre una base con datos del prototipo, la 0002 migra
    (fechas `"Hoy"`/`"Mañana"` a `date`, frecuencia del cliente a servicio, horas a
    `registro_horas`, contraseñas en claro eliminadas).
 2. **Primer admin**: Authentication → Users → *Add user* (auto confirm). Luego:
@@ -145,6 +147,15 @@ Configuration poner la URL pública como *Site URL*.
 - Datos en vivo: realtime de Supabase + respaldo (al volver a la pestaña se recarga todo; los mensajes se refrescan cada 20 s mientras la pestaña está visible). Si el realtime no llega, revisar `pg_publication_tables` (la 0006 lo deja bien).
 - **Plan de Supabase para producción:** el free se pausa a los 7 días sin actividad y no tiene
   backups automáticos. Para operación diaria conviene Pro (USD 25/mes: 100 GB storage, backups diarios).
+- **Recargos:** un trabajo toma un solo recargo, el más alto de los que apliquen (un feriado en
+  domingo no suma los dos). Solo sobre montos por trabajo; el mensual no se recalcula por día.
+  Horario nocturno: 18:00–07:00, constante en `lib/tarifas.js`. Los feriados de Islandia se
+  calculan (`lib/feriados.js`), incluidos los que dependen de Pascua; medio día (24 y 31/12) no cuenta.
+- **Costo por persona:** `staff.costo_hora` × horas registradas. Es registro operativo para saber
+  cuánto pagar y calcular el margen real; **no** hay impuestos, aportes ni recibos (spec §6).
+  Si nadie tiene tarifa cargada, Rentabilidad vuelve al costo/hora de referencia manual.
+- **Vehículos y máquinas:** alta simple y asignación por trabajo, con aviso (no bloqueo) si el
+  recurso ya está en otro trabajo ese día. No es inventario ni stock.
 - Chat: sin push ni canal general (nivel A). Si se quiere aviso con la app cerrada → PWA + Web Push (nivel C del plan). RLS del chat (`puede_ver_job`) a revisar por Samuel junto con el resto.
 - Checklists: la traducción es manual (pestañas EN / IS en Checklists). Traducción automática sería un paso más (API externa, costo por carácter) — no está hecha.
 - El portal no muestra fotos (los buckets son privados y el portal es anónimo). Si se quiere, va por una edge function que firme URLs contra el token.

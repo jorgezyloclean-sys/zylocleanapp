@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { MOCK, snapshot, subscribe } from "../dev/mock";
 
-const TABLES = ["clients", "staff", "checklists", "jobs", "servicios_contratados", "registro_horas", "solicitudes", "portal_tokens", "mensajes", "staff_nombres"];
+const TABLES = ["clients", "staff", "checklists", "jobs", "servicios_contratados", "registro_horas", "solicitudes", "portal_tokens", "mensajes", "recursos", "staff_nombres"];
 const PK = { portal_tokens: "token" };
 const NO_REALTIME = new Set(["staff_nombres"]); // vista: sin cambios en vivo, se recarga con el resto
 const POLL_MS = 20000; // respaldo si el realtime no llega (móvil bloqueado, tabla sin publicar)
@@ -90,7 +90,7 @@ export function useAppData(enabled) {
   return {
     clients: data.clients, staff: data.staff, checklists: data.checklists, jobs: data.jobs,
     servicios: data.servicios_contratados, registros: data.registro_horas,
-    solicitudes: data.solicitudes, portalTokens: data.portal_tokens, mensajes: data.mensajes,
+    solicitudes: data.solicitudes, portalTokens: data.portal_tokens, mensajes: data.mensajes, recursos: data.recursos,
     // Nombres de todo el personal (vista): lo que un operativo necesita para saber quién escribió.
     staffNombres: data.staff_nombres,
     loading, error, refresh: load, patch,

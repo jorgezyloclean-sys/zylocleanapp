@@ -13,6 +13,7 @@ import ClientsPage from "./pages/Clients.jsx";
 import StaffPage from "./pages/Staff.jsx";
 import SchedulePage from "./pages/Schedule.jsx";
 import ChecklistsPage from "./pages/Checklists.jsx";
+import ResourcesPage from "./pages/Resources.jsx";
 import ReportsPage from "./pages/Reports.jsx";
 import ProfitabilityPage from "./pages/Profitability.jsx";
 import EmployeeView from "./pages/Employee.jsx";
@@ -65,7 +66,7 @@ function AuthedApp() {
   if (data.loading && data.jobs.length === 0) return <Spinner label={t("common.loading")} />;
 
   if (profile.rol !== "admin") {
-    return <EmployeeView profile={profile} onLogout={logout} onLangChange={onLangChange} clients={data.clients} jobs={data.jobs} checklists={data.checklists} registros={data.registros} mensajes={data.mensajes} staff={data.staffNombres.length ? data.staffNombres : data.staff} portalTokens={data.portalTokens} patch={data.patch} />;
+    return <EmployeeView profile={profile} onLogout={logout} onLangChange={onLangChange} clients={data.clients} jobs={data.jobs} checklists={data.checklists} registros={data.registros} mensajes={data.mensajes} staff={data.staffNombres.length ? data.staffNombres : data.staff} portalTokens={data.portalTokens} recursos={data.recursos} patch={data.patch} />;
   }
 
   const nuevas = data.solicitudes.filter((s) => s.estado === "nueva").length;
@@ -80,6 +81,7 @@ function AuthedApp() {
       {page === "personal" && <StaffPage {...common} />}
       {page === "programacion" && <SchedulePage {...common} />}
       {page === "checklists" && <ChecklistsPage {...common} />}
+      {page === "recursos" && <ResourcesPage {...common} />}
       {page === "reportes" && <ReportsPage {...common} />}
       {page === "rentabilidad" && <ProfitabilityPage {...common} />}
     </AdminShell>

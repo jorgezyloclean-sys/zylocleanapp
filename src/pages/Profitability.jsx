@@ -4,17 +4,17 @@
 import { useMemo, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { Download, Wallet, Clock, TrendingDown, TrendingUp, Briefcase } from "lucide-react";
-import { C, EmptyState, KpiCard, PageHeader, PeriodPicker, Pill } from "../components/ui.jsx";
+import { C, EmptyState, KpiCard, PageHeader, PeriodPicker, Pill, Banner } from "../components/ui.jsx";
 import { useT } from "../i18n/index.jsx";
 import { formatMes, periodPresets, todayISO } from "../lib/dates";
 import { hoursLabel, money, num } from "../lib/format";
-import { rentabilidadPorCliente, serieMensual } from "../lib/stats";
+import { costoTotalPersonal, rentabilidadPorCliente, serieMensual } from "../lib/stats";
 import { downloadFile, toCSV } from "../lib/csv";
 import { toast } from "../lib/toast";
 
 const tooltipStyle = { contentStyle: { borderRadius: 10, border: "1px solid var(--border)", background: "var(--surface)", color: "var(--ink)", fontSize: 12 }, labelStyle: { color: "var(--ink)", fontWeight: 600 } };
 
-export default function ProfitabilityPage({ clients, servicios, jobs, registros }) {
+export default function ProfitabilityPage({ clients, servicios, jobs, registros, staff = [] }) {
   const { t, lang } = useT();
   const [period, setPeriod] = useState(() => periodPresets().mes);
   const [costoHora, setCostoHora] = useState(() => { try { return Number(localStorage.getItem("zyloclean_costo_hora")) || ""; } catch { return ""; } });
@@ -26,8 +26,11 @@ export default function ProfitabilityPage({ clients, servicios, jobs, registros 
     trabajos: rows.reduce((s, r) => s + r.trabajos, 0),
   }), [rows]);
   const ingresoHora = tot.horas > 0 ? tot.ingresos / tot.horas : null;
+  // Si el personal tiene costo por hora cargado, el costo real manda sobre el promedio a mano.
+  const real = useMemo(() => costoTotalPersonal(staff, registros, jobs, period.from, period.to), [staff, registros, jobs, period]);
   const costo = Number(costoHora) || 0;
-  const margen = costo && tot.horas ? tot.ingresos - tot.horas * costo : null;
+  const costoTotal = real ? real.total : (costo && tot.horas ? tot.horas * costo : null);
+  const margen = costoTotal === null ? null : tot.ingresos - costoTotal;
   const serie = useMemo(() => serieMensual({ servicios, jobs, registros, meses: 6, hoy: todayISO() }).map((m) => ({ ...m, mes: formatMes(m.mes, lang).slice(0, 3), horas: +m.horas.toFixed(1) })), [servicios, jobs, registros, lang]);
 
   function saveCosto(v) { setCostoHora(v); try { localStorage.setItem("zyloclean_costo_hora", v); } catch { /* nada */ } }
@@ -48,17 +51,21 @@ export default function ProfitabilityPage({ clients, servicios, jobs, registros 
         action={<button className="btn-ghost" onClick={exportCSV} disabled={!rows.length}><Download size={14} /> {t("common.exportCsv")}</button>} />
       <div className="reports-toolbar animate-fadeUp">
         <PeriodPicker value={period} onChange={setPeriod} />
-        <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: C.muted, marginLeft: "auto" }}>
+        <label style={{ display: real ? "none" : "flex", alignItems: "center", gap: 8, fontSize: 12, color: C.muted, marginLeft: "auto" }}>
           {t("rent.costLabel")}
           <input type="number" min={0} inputMode="decimal" className="input-base tabular" style={{ width: 120 }} value={costoHora} onChange={(e) => saveCosto(e.target.value)} placeholder={`${moneda}/h`} aria-label={t("rent.costLabel")} />
         </label>
       </div>
 
+      {real?.sinTarifa?.length ? (
+        <div style={{ marginBottom: 14 }}><Banner tone="info">{t("rent.noRateFor", { names: real.sinTarifa.join(", ") })}</Banner></div>
+      ) : null}
+
       <div className="kpi-grid" style={{ marginBottom: 20 }}>
         <KpiCard icon={Wallet} label={t("rent.kpi.income")} value={money(tot.ingresos, moneda, lang)} sub={t("rent.kpi.incomeSub", { c: rows.length, j: tot.trabajos })} delay={0} />
         <KpiCard icon={Clock} label={t("rep.kpi.hours")} value={hoursLabel(tot.horas)} sub={tot.est ? t("rent.kpi.hoursSub", { d: `${tot.horas > tot.est ? "+" : ""}${num(tot.horas - tot.est, lang)}` }) : t("rent.kpi.noEst")} tone={tot.est && tot.horas > tot.est ? "var(--danger)" : C.primary} delay={75} />
         <KpiCard icon={TrendingUp} label={t("rent.kpi.perHour")} value={ingresoHora === null ? "—" : money(ingresoHora, moneda, lang)} sub={t("rent.kpi.perHourSub")} delay={150} />
-        <KpiCard icon={margen !== null && margen < 0 ? TrendingDown : Briefcase} label={t("rent.kpi.margin")} value={margen === null ? "—" : money(margen, moneda, lang)} sub={margen === null ? t("rent.kpi.marginNoCost") : t("rent.kpi.marginSub", { c: money(costo, moneda, lang) })} tone={margen !== null && margen < 0 ? "var(--danger)" : "var(--success)"} delay={225} />
+        <KpiCard icon={margen !== null && margen < 0 ? TrendingDown : Briefcase} label={t("rent.kpi.margin")} value={margen === null ? "—" : money(margen, moneda, lang)} sub={margen === null ? t("rent.kpi.marginNoCost") : real ? t("rent.kpi.marginReal", { n: real.personas, c: money(costoTotal, moneda, lang) }) : t("rent.kpi.marginSub", { c: money(costo, moneda, lang) })} tone={margen !== null && margen < 0 ? "var(--danger)" : "var(--success)"} delay={225} />
       </div>
 
       <div className="two-col" style={{ marginBottom: 20 }}>

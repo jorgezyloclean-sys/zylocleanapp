@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
   LayoutDashboard, Building2, Users, CalendarDays, ClipboardCheck, BarChart3, TrendingUp,
-  LogOut, ChevronRight, Menu,
+  LogOut, ChevronRight, Menu, Truck,
 } from "lucide-react";
 import { Mark, Wordmark } from "../components/Brand.jsx";
 import { Avatar, C, LangSwitch, ThemeSwitch } from "../components/ui.jsx";
@@ -13,6 +13,7 @@ export const NAV_ITEMS = [
   { id: "personal", key: "nav.personal", icon: Users },
   { id: "programacion", key: "nav.programacion", icon: CalendarDays },
   { id: "checklists", key: "nav.checklists", icon: ClipboardCheck },
+  { id: "recursos", key: "nav.recursos", icon: Truck },
   { id: "reportes", key: "nav.reportes", icon: BarChart3 },
   { id: "rentabilidad", key: "nav.rentabilidad", icon: TrendingUp },
 ];

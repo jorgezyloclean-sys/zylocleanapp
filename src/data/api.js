@@ -64,6 +64,15 @@ export async function insertChecklist(row) {
 export async function updateChecklist(id, patch) { if (MOCK) return mockApi.update("checklists", id, patch); must(await supabase.from("checklists").update(patch).eq("id", id)); }
 export async function deleteChecklist(id) { if (MOCK) return mockApi.remove("checklists", id); must(await supabase.from("checklists").delete().eq("id", id)); }
 
+/* ------------------------------------------------- recursos (vehículos y maquinaria) */
+export async function insertRecurso(row) {
+  const data = { id: newId("rc"), activo: true, ...row };
+  if (MOCK) return mockApi.upsert("recursos", data);
+  return must(await supabase.from("recursos").insert(data).select().single());
+}
+export async function updateRecurso(id, patch) { if (MOCK) return mockApi.update("recursos", id, patch); must(await supabase.from("recursos").update(patch).eq("id", id)); return true; }
+export async function deleteRecurso(id) { if (MOCK) return mockApi.remove("recursos", id); must(await supabase.from("recursos").delete().eq("id", id)); return true; }
+
 /* --------------------------------------------------------- mensajes (chat por trabajo) */
 export async function insertMensaje({ job_id, autor_id, texto, adjunto = null }) {
   const data = { id: newId("m"), job_id, autor_id, texto: (texto || "").trim(), adjunto, leido_por: [autor_id], created_at: new Date().toISOString() };

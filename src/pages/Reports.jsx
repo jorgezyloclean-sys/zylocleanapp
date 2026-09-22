@@ -6,7 +6,7 @@ import { Download, Clock, CheckCheck, XCircle, TrendingUp, BarChart3 } from "luc
 import { C, EmptyState, KpiCard, PageHeader, PeriodPicker, Segmented, StarRating, StatusBadge } from "../components/ui.jsx";
 import { useT } from "../i18n/index.jsx";
 import { formatFecha, formatMes, periodPresets, todayISO } from "../lib/dates";
-import { hoursLabel, num } from "../lib/format";
+import { hoursLabel, num, money } from "../lib/format";
 import { avgChecklistPct, avgRating, checklistPct, comparables, inPeriod, jobHoras, jobHorasEstimadas, registroHoras, serieMensual } from "../lib/stats";
 import { downloadFile, toCSV } from "../lib/csv";
 import { toast } from "../lib/toast";
@@ -39,7 +39,8 @@ export default function ReportsPage({ clients, staff, jobs, checklists, servicio
     const regs = registros.filter((r) => r.personal_id === s.id && r.fin && sj.some((j) => j.id === r.job_id));
     const horas = regs.reduce((a, r) => a + registroHoras(r), 0);
     const est = comparables(sj).reduce((a, j) => a + (j.duracion_estimada_min ?? svcOf(j)?.duracion_estimada_min ?? 0) / 60, 0);
-    return { persona: s.nombre, id: s.id, trabajos: sj.length, finalizados: sj.filter((j) => j.estado === "finalizado").length, horas, est, desvio: est ? horas - est : null, cumplimiento: avgChecklistPct(sj, checklists), rating: avgRating(sj) };
+    const tarifa = Number(s.costo_hora) || 0;
+    return { persona: s.nombre, id: s.id, trabajos: sj.length, finalizados: sj.filter((j) => j.estado === "finalizado").length, horas, est, desvio: est ? horas - est : null, cumplimiento: avgChecklistPct(sj, checklists), rating: avgRating(sj), aPagar: tarifa > 0 ? Math.round(horas * tarifa) : null };
   }).filter((r) => r.trabajos > 0).sort((a, b) => b.horas - a.horas), [staff, enPeriodo, registros, checklists, servicios]);
 
   const detalle = useMemo(() => enPeriodo.slice().sort((a, b) => (a.fecha + a.hora).localeCompare(b.fecha + b.hora)).map((j) => {
@@ -56,11 +57,13 @@ export default function ReportsPage({ clients, staff, jobs, checklists, servicio
     if (tab === "clientes") downloadFile(`horas_por_cliente_${tag}.csv`, toCSV(porCliente, [
       { label: L("rep.csv.client"), value: "cliente" }, { label: L("rep.csv.jobs"), value: "trabajos" }, { label: L("rep.csv.finished"), value: "finalizados" },
       { label: L("rep.csv.realH"), value: (r) => r.reales.toFixed(2) }, { label: L("rep.csv.estH"), value: (r) => r.est.toFixed(2) }, { label: L("rep.csv.dev"), value: (r) => r.desvio === null ? "" : r.desvio.toFixed(2) },
-      { label: L("rep.csv.compliance"), value: (r) => r.cumplimiento ?? "" }, { label: L("common.rating"), value: (r) => r.rating ?? "" }]));
+      { label: L("rep.csv.compliance"), value: (r) => r.cumplimiento ?? "" }, { label: L("common.rating"), value: (r) => r.rating ?? "" },
+      { label: L("rep.payable"), value: (r) => r.aPagar ?? "" }]));
     else if (tab === "personas") downloadFile(`horas_por_persona_${tag}.csv`, toCSV(porPersona, [
       { label: L("rep.csv.person"), value: "persona" }, { label: L("rep.csv.jobs"), value: "trabajos" }, { label: L("rep.csv.finished"), value: "finalizados" },
       { label: L("rep.csv.realH"), value: (r) => r.horas.toFixed(2) }, { label: L("rep.csv.estH"), value: (r) => r.est.toFixed(2) }, { label: L("rep.csv.dev"), value: (r) => r.desvio === null ? "" : r.desvio.toFixed(2) },
-      { label: L("rep.csv.compliance"), value: (r) => r.cumplimiento ?? "" }, { label: L("common.rating"), value: (r) => r.rating ?? "" }]));
+      { label: L("rep.csv.compliance"), value: (r) => r.cumplimiento ?? "" }, { label: L("common.rating"), value: (r) => r.rating ?? "" },
+      { label: L("rep.payable"), value: (r) => r.aPagar ?? "" }]));
     else downloadFile(`detalle_trabajos_${tag}.csv`, toCSV(detalle, [
       { label: L("common.date"), value: "fecha" }, { label: L("common.time"), value: "hora" }, { label: L("rep.csv.client"), value: "cliente" }, { label: L("rep.csv.staff"), value: "personal" }, { label: L("common.status"), value: (r) => t(`estado.${r.estado}`) },
       { label: L("rep.csv.realH"), value: (r) => r.reales.toFixed(2) }, { label: L("rep.csv.estH"), value: (r) => r.est.toFixed(2) }, { label: L("rep.csv.dev"), value: (r) => r.desvio === null ? "" : r.desvio.toFixed(2) },
@@ -131,10 +134,10 @@ export default function ReportsPage({ clients, staff, jobs, checklists, servicio
         )}
         {tab === "personas" && (
           <table className="data-table">
-            <thead><tr><th>{t("common.person")}</th><th className="num">{t("common.jobs")}</th><th className="num">{t("rent.chart.hours")}</th><th className="num">{t("common.estimated")}</th><th className="num">{t("common.deviation")}</th><th className="num">{t("common.checklist")}</th><th>{t("common.rating")}</th></tr></thead>
+            <thead><tr><th>{t("common.person")}</th><th className="num">{t("common.jobs")}</th><th className="num">{t("rent.chart.hours")}</th><th className="num">{t("common.estimated")}</th><th className="num">{t("common.deviation")}</th><th className="num">{t("common.checklist")}</th><th>{t("common.rating")}</th><th className="num">{t("rep.payable")}</th></tr></thead>
             <tbody>{porPersona.map((r) => (
-              <tr key={r.id}><td style={{ fontWeight: 600, color: C.ink }}>{r.persona}</td><td className="num">{r.finalizados}/{r.trabajos}</td><td className="num">{hoursLabel(r.horas)}</td><td className="num">{r.est ? hoursLabel(r.est) : "—"}</td><td className="num"><Desvio v={r.desvio} /></td><td className="num">{r.cumplimiento ?? "—"}%</td><td><StarRating value={r.rating} empty="—" /></td></tr>
-            ))}{porPersona.length === 0 && <tr><td colSpan={7} style={{ textAlign: "center", color: C.muted, padding: 30 }}>{t("rep.noData")}</td></tr>}</tbody>
+              <tr key={r.id}><td style={{ fontWeight: 600, color: C.ink }}>{r.persona}</td><td className="num">{r.finalizados}/{r.trabajos}</td><td className="num">{hoursLabel(r.horas)}</td><td className="num">{r.est ? hoursLabel(r.est) : "—"}</td><td className="num"><Desvio v={r.desvio} /></td><td className="num">{r.cumplimiento ?? "—"}%</td><td><StarRating value={r.rating} empty="—" /></td><td className="num">{r.aPagar === null ? "—" : money(r.aPagar, "ISK", lang)}</td></tr>
+            ))}{porPersona.length === 0 && <tr><td colSpan={8} style={{ textAlign: "center", color: C.muted, padding: 30 }}>{t("rep.noData")}</td></tr>}</tbody>
           </table>
         )}
         {tab === "trabajos" && (

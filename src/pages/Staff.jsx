@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
-import { Plus, Pencil, Trash2, Star, Languages, Phone, KeyRound, Download, ShieldOff, UserCheck, UserX, Users, Mail } from "lucide-react";
-import { Avatar, C, EmptyState, Field, Modal, PageHeader, Pill, ProgressBar, Segmented, StarRating, Toggle, useConfirm, Banner } from "../components/ui.jsx";
+import { Plus, Pencil, Trash2, Star, Languages, Phone, KeyRound, Download, ShieldOff, UserCheck, UserX, Users, Mail, Wallet } from "lucide-react";
+import { Avatar, C, EmptyState, Field, Modal, PageHeader, Pill, ProgressBar, Segmented, StarRating, Toggle, useConfirm, Banner, FONT_MONO } from "../components/ui.jsx";
 import { LANGS, useT } from "../i18n/index.jsx";
-import { formatKennitala, hoursLabel } from "../lib/format";
-import { avgChecklistPct, avgRating, jobsForStaff, tasaFinalizados } from "../lib/stats";
+import { formatKennitala, hoursLabel, money } from "../lib/format";
+import { periodPresets } from "../lib/dates";
+import { avgChecklistPct, avgRating, costoPersona, jobsForStaff, tasaFinalizados } from "../lib/stats";
 import { downloadFile } from "../lib/csv";
 import { run, toast } from "../lib/toast";
 import * as api from "../data/api";
@@ -13,7 +14,7 @@ const PAGO_KEY = { "Por hora": "porHora", "Sueldo fijo": "sueldo", "Por trabajo"
 const tipoLabel = (v, t) => t(`st.f.tipo.${TIPO_KEY[v] || "fijo"}`);
 const pagoLabel = (v, t) => t(`st.f.pago.${PAGO_KEY[v] || "porHora"}`);
 
-const emptyStaff = () => ({ nombre: "", rol: "operativo", tipo: "Fijo", idiomas: [], pago: "Por hora", telefono: "", email: "", kennitala: "", destacado: false, estado: "activo", activo: true, idioma: "es", "señal": "buena" });
+const emptyStaff = () => ({ nombre: "", rol: "operativo", tipo: "Fijo", idiomas: [], pago: "Por hora", costo_hora: "", telefono: "", email: "", kennitala: "", destacado: false, estado: "activo", activo: true, idioma: "es", "señal": "buena" });
 
 export default function StaffPage({ staff, jobs, checklists, clients, registros, profile, patch }) {
   const { t } = useT();
@@ -123,7 +124,7 @@ function StaffForm({ initial, onSave, onCancel, saving, isSelf }) {
     setErrors(errs);
     if (Object.keys(errs).length) return;
     const { idiomasStr, ...rest } = form;
-    onSave({ ...rest, idiomas: idiomasStr.split(",").map((s) => s.trim()).filter(Boolean), estado: rest.activo ? "activo" : "inactivo" });
+    onSave({ ...rest, costo_hora: rest.costo_hora === "" || rest.costo_hora == null ? null : Number(rest.costo_hora), idiomas: idiomasStr.split(",").map((s) => s.trim()).filter(Boolean), estado: rest.activo ? "activo" : "inactivo" });
   }
   return (
     <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 14 }} noValidate>
@@ -139,6 +140,9 @@ function StaffForm({ initial, onSave, onCancel, saving, isSelf }) {
       <div className="form-grid-2">
         <Field label={t("st.f.tipo")}><select className="input-base" value={form.tipo} onChange={set("tipo")}>{Object.entries(TIPO_KEY).map(([v, k]) => <option key={v} value={v}>{t(`st.f.tipo.${k}`)}</option>)}</select></Field>
         <Field label={t("st.f.pago")}><select className="input-base" value={form.pago} onChange={set("pago")}>{Object.entries(PAGO_KEY).map(([v, k]) => <option key={v} value={v}>{t(`st.f.pago.${k}`)}</option>)}</select></Field>
+        <Field label={t("st.f.costoHora")} hint={t("st.f.costoHoraHint")}>
+          <input type="number" min={0} step="any" inputMode="decimal" className="input-base tabular" value={form.costo_hora ?? ""} onChange={set("costo_hora")} placeholder="ISK/h" />
+        </Field>
       </div>
       <div className="form-grid-2">
         <Field label={t("st.f.email")} hint={t("st.f.emailHint")} error={errors.email}><input type="email" inputMode="email" className="input-base" value={form.email || ""} onChange={set("email")} placeholder="empleado@ejemplo.com" /></Field>
@@ -161,7 +165,10 @@ function StaffForm({ initial, onSave, onCancel, saving, isSelf }) {
 }
 
 function StaffDetail({ item: s, jobs, clients, registros, checklists, profile, patch, onClose, onEdit, onDelete, confirm }) {
-  const { t } = useT();
+  const { t, lang } = useT();
+  const [periodo, setPeriodo] = useState("mes");
+  const rango = periodPresets()[periodo];
+  const pago = costoPersona(s, registros, jobs, rango.from, rango.to);
   const [userForm, setUserForm] = useState({ email: s.email || "", password: "" });
   const [busy, setBusy] = useState(false);
   const sJobs = jobsForStaff(jobs, s.id);
@@ -224,6 +231,25 @@ function StaffDetail({ item: s, jobs, clients, registros, checklists, profile, p
         {[[t("st.f.email"), s.email], [t("st.f.phone"), s.telefono], [t("cli.f.kennitala"), s.kennitala], [t("st.d.langs"), (s.idiomas || []).join(", ")], [t("st.d.uiLang"), LANGS.find((l) => l.id === s.idioma)?.label]]
           .filter(([, v]) => v).map(([l, v]) => <div key={l}><dt>{l}</dt><dd>{v}</dd></div>)}
       </dl>
+
+      {/* Cuánto pagarle por lo que trabajó. Registro operativo, no liquidación de sueldos. */}
+      <h4 className="section-title"><Wallet size={14} /> {t("st.pay.title")}</h4>
+      <div style={{ padding: 12, borderRadius: 12, background: C.surface2, border: `1px solid ${C.borderSubtle}`, marginBottom: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
+          <Segmented value={periodo} onChange={setPeriodo} ariaLabel={t("st.pay.period")} options={[
+            { id: "mes", label: t("period.month") }, { id: "mesPasado", label: t("period.lastMonth") }, { id: "semana", label: t("period.week") },
+          ]} />
+        </div>
+        {pago.tarifa > 0 ? (
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+            <span className="tabular" style={{ fontFamily: FONT_MONO, fontSize: 22, fontWeight: 600, color: C.primary }}>{money(pago.aPagar, "ISK", lang)}</span>
+            <span style={{ fontSize: 12, color: C.muted }}>{t("st.pay.formula", { h: hoursLabel(pago.horas), tarifa: money(pago.tarifa, "ISK", lang), n: pago.trabajos })}</span>
+          </div>
+        ) : (
+          <p style={{ fontSize: 12.5, color: C.muted }}>{t("st.pay.noRate", { h: hoursLabel(pago.horas), n: pago.trabajos })}</p>
+        )}
+        <p style={{ fontSize: 11, color: C.muted2, marginTop: 8 }}>{t("st.pay.note")}</p>
+      </div>
 
       <h4 className="section-title"><KeyRound size={14} /> {t("st.access")}</h4>
       {s.auth_user_id ? (

@@ -132,3 +132,29 @@ export function serieMensual({ servicios, jobs, registros, meses = 6, hoy }) {
   }
   return out;
 }
+
+/* ------------------------------------------------- costo del personal (registro operativo)
+ * `staff.costo_hora` × horas registradas. No calcula impuestos ni aportes: sirve para saber
+ * cuánto pagarle a cada persona por lo que efectivamente trabajó (spec §6 excluye liquidación).
+ */
+export function costoPersona(persona, registros, jobs, from, to) {
+  const enPeriodo = new Set(jobs.filter((j) => inPeriod(j, from, to)).map((j) => j.id));
+  const regs = registros.filter((r) => r.personal_id === persona.id && enPeriodo.has(r.job_id));
+  const horas = regs.reduce((s, r) => s + registroHoras(r), 0);
+  const tarifa = Number(persona.costo_hora) || 0;
+  return {
+    horas,
+    trabajos: new Set(regs.map((r) => r.job_id)).size,
+    tarifa,
+    aPagar: tarifa > 0 ? Math.round(horas * tarifa) : null,
+  };
+}
+
+/** Costo total del período usando la tarifa de cada persona; null si nadie tiene tarifa. */
+export function costoTotalPersonal(staff, registros, jobs, from, to) {
+  const conTarifa = staff.filter((s) => Number(s.costo_hora) > 0);
+  if (!conTarifa.length) return null;
+  const total = conTarifa.reduce((sum, s) => sum + (costoPersona(s, registros, jobs, from, to).aPagar || 0), 0);
+  const sinTarifa = staff.filter((s) => !Number(s.costo_hora) && costoPersona(s, registros, jobs, from, to).horas > 0);
+  return { total, personas: conTarifa.length, sinTarifa: sinTarifa.map((s) => s.nombre) };
+}

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Plus, FileText, CalendarDays, Pencil, Trash2, ClipboardCheck, MapPin, RefreshCw, ChevronRight, AlertTriangle, MessageSquare, Briefcase } from "lucide-react";
+import { Plus, FileText, CalendarDays, Pencil, Trash2, ClipboardCheck, MapPin, RefreshCw, ChevronRight, AlertTriangle, MessageSquare, Briefcase, Truck, Wrench } from "lucide-react";
 import { noLeidosPorJob } from "../lib/chat";
 import { Avatar, C, EmptyState, Field, Modal, PageHeader, Pill, Segmented, StarRating, StatusBadge, LiveTimer, PeriodPicker, useConfirm, Banner, FONT_DISPLAY } from "../components/ui.jsx";
 import DateField from "../components/DateField.jsx";
@@ -13,11 +13,12 @@ import { run, toast } from "../lib/toast";
 import * as api from "../data/api";
 import { emailJobToStaff, emailJobAssignedToClient } from "../email/templates";
 import { localizeChecklist } from "../lib/checklist";
+import { montoDeTrabajo, recargoDe } from "../lib/tarifas";
 import { serviceTypeLabel } from "../components/ClientForm.jsx";
 
-const emptyForm = (checklists) => ({ clienteId: "", servicio_id: "", ubicacionId: "", empleados: [], fecha: todayISO(), hora: "08:00", checklistId: checklists[0]?.id || "", duracion_estimada_min: "", monto: "", notas: "" });
+const emptyForm = (checklists) => ({ clienteId: "", servicio_id: "", ubicacionId: "", empleados: [], fecha: todayISO(), hora: "08:00", checklistId: checklists[0]?.id || "", duracion_estimada_min: "", monto: "", recargo: null, recursos: [], notas: "" });
 
-export default function SchedulePage({ clients, staff, jobs, checklists, servicios, registros, mensajes = [], portalTokens = [], patch, profile }) {
+export default function SchedulePage({ clients, staff, jobs, checklists, servicios, registros, mensajes = [], portalTokens = [], recursos = [], patch, profile }) {
   const sinLeer = noLeidosPorJob(mensajes, profile.id);
   // Enlace del portal para que el correo al cliente lleve el botón de seguimiento.
   const tokenDe = (clienteId) => portalTokens.find((tk) => tk.cliente_id === clienteId && tk.activo)?.token || null;
@@ -47,6 +48,9 @@ export default function SchedulePage({ clients, staff, jobs, checklists, servici
       empleados: form.empleados, fecha: form.fecha, hora: form.hora, checklistId: form.checklistId,
       duracion_estimada_min: form.duracion_estimada_min === "" ? null : Number(form.duracion_estimada_min),
       monto: form.monto === "" ? null : Number(form.monto), notas: form.notas || null,
+      // Qué recargo justifica el monto, para que quede auditable aunque cambie la regla.
+      recargo: form.recargo || null,
+      recursos: form.recursos || [],
     };
     const client = clients.find((c) => c.id === form.clienteId);
     const assigned = form.empleados.map((id) => staff.find((s) => s.id === id)).filter(Boolean);
@@ -72,7 +76,7 @@ export default function SchedulePage({ clients, staff, jobs, checklists, servici
 
   function startEdit(job) {
     setDetailId(null);
-    setDispatch({ editId: job.id, form: { clienteId: job.clienteId, servicio_id: job.servicio_id || "", ubicacionId: job.ubicacionId || "", empleados: job.empleados || [], fecha: job.fecha, hora: job.hora, checklistId: job.checklistId || "", duracion_estimada_min: job.duracion_estimada_min ?? "", monto: job.monto ?? "", notas: job.notas || "" } });
+    setDispatch({ editId: job.id, form: { clienteId: job.clienteId, servicio_id: job.servicio_id || "", ubicacionId: job.ubicacionId || "", empleados: job.empleados || [], fecha: job.fecha, hora: job.hora, checklistId: job.checklistId || "", duracion_estimada_min: job.duracion_estimada_min ?? "", monto: job.monto ?? "", recargo: job.recargo || null, recursos: job.recursos || [], notas: job.notas || "" } });
   }
 
   return (
@@ -118,6 +122,7 @@ export default function SchedulePage({ clients, staff, jobs, checklists, servici
                       {job.recurrente_key && <Pill icon={RefreshCw}>{t("sch.recurring")}</Pill>}
                       {job.incidente && !job.incidente.resuelto && <Pill tone="danger" icon={AlertTriangle}>{t("estado.incidente")}</Pill>}
                       {job.monto ? <Pill tone="success">{money(job.monto, "ISK", lang)}</Pill> : null}
+                      {job.recargo ? <Pill tone="amber">{t("job.surcharge", { motivo: t(`motivo.${job.recargo.motivo}`), pct: job.recargo.pct })}</Pill> : null}
                     </div>
                   </div>
                 </div>
@@ -168,7 +173,7 @@ export default function SchedulePage({ clients, staff, jobs, checklists, servici
 
       {dispatch && (
         <Modal title={dispatch.editId ? t("sch.editTitle") : t("sch.dispatch")} onClose={() => setDispatch(null)} wide gradient>
-          <JobForm form={dispatch.form} setForm={(f) => setDispatch({ ...dispatch, form: f })} clients={clients} staff={operativos} checklists={checklists} servicios={servicios}
+          <JobForm form={dispatch.form} setForm={(f) => setDispatch({ ...dispatch, form: f })} clients={clients} staff={operativos} checklists={checklists} servicios={servicios} recursos={recursos} jobs={jobs} editId={dispatch.editId}
             onSubmit={() => saveJob(dispatch.form)} onCancel={() => setDispatch(null)} saving={saving} isEdit={!!dispatch.editId} />
         </Modal>
       )}
@@ -187,17 +192,35 @@ export default function SchedulePage({ clients, staff, jobs, checklists, servici
 }
 
 /* ============================================================ Formulario */
-function JobForm({ form, setForm, clients, staff, checklists, servicios, onSubmit, onCancel, saving, isEdit }) {
+function JobForm({ form, setForm, clients, staff, checklists, servicios, recursos = [], jobs = [], editId, onSubmit, onCancel, saving, isEdit }) {
   const { t, lang } = useT();
   const client = clients.find((c) => c.id === form.clienteId);
   const svc = servicios.filter((s) => s.cliente_id === form.clienteId && s.activo);
   const ubicaciones = client?.ubicaciones || [];
+  const servicioSel = svc.find((s) => s.id === form.servicio_id);
+
+  /** Recalcula el monto con el recargo que corresponda a esa fecha y hora. */
+  function conMonto(next) {
+    const s = svc.find((x) => x.id === next.servicio_id);
+    if (!s) return { ...next, recargo: null };
+    const { monto, recargo } = montoDeTrabajo(s, next.fecha, next.hora);
+    return { ...next, monto: monto ?? "", recargo };
+  }
 
   function pickServicio(id) {
     const s = svc.find((x) => x.id === id);
-    if (!s) { setForm({ ...form, servicio_id: "" }); return; }
-    setForm({ ...form, servicio_id: id, ubicacionId: s.ubicacion_id || form.ubicacionId, hora: s.hora || form.hora, checklistId: s.checklist_id || client?.checklistId || form.checklistId, duracion_estimada_min: s.duracion_estimada_min ?? "", monto: s.tipo_monto === "por_trabajo" ? s.monto_acordado : "" });
+    if (!s) { setForm({ ...form, servicio_id: "", recargo: null }); return; }
+    setForm(conMonto({
+      ...form, servicio_id: id, ubicacionId: s.ubicacion_id || form.ubicacionId, hora: s.hora || form.hora,
+      checklistId: s.checklist_id || client?.checklistId || form.checklistId,
+      duracion_estimada_min: s.duracion_estimada_min ?? "",
+    }));
   }
+  const toggleRecurso = (id) => setForm({ ...form, recursos: (form.recursos || []).includes(id) ? form.recursos.filter((r) => r !== id) : [...(form.recursos || []), id] });
+  // Aviso (no bloquea): el recurso ya está en otro trabajo ese mismo día.
+  const ocupados = new Map();
+  jobs.filter((j) => j.fecha === form.fecha && j.id !== editId && j.estado !== "no_realizado")
+    .forEach((j) => (j.recursos || []).forEach((r) => ocupados.set(r, clients.find((c) => c.id === j.clienteId)?.nombre || "?")));
   const toggleEmp = (id) => setForm({ ...form, empleados: form.empleados.includes(id) ? form.empleados.filter((e) => e !== id) : [...form.empleados, id] });
 
   return (
@@ -231,15 +254,18 @@ function JobForm({ form, setForm, clients, staff, checklists, servicios, onSubmi
         </Field>
       </div>
       <div className="form-grid-2">
-        <Field label={t("common.date")} required><DateField value={form.fecha} onChange={(fecha) => setForm({ ...form, fecha })} /></Field>
-        <Field label={t("common.time")} required><input required type="time" className="input-base" value={form.hora} onChange={(e) => setForm({ ...form, hora: e.target.value })} /></Field>
+        <Field label={t("common.date")} required><DateField value={form.fecha} onChange={(fecha) => setForm(conMonto({ ...form, fecha }))} /></Field>
+        <Field label={t("common.time")} required><input required type="time" className="input-base" value={form.hora} onChange={(e) => setForm(conMonto({ ...form, hora: e.target.value }))} /></Field>
       </div>
       <div className="form-grid-2">
         <Field label={t("sch.f.duration")} hint={t("sch.f.durationHint")}>
           <input type="number" min={0} step={15} inputMode="numeric" className="input-base" value={form.duracion_estimada_min} onChange={(e) => setForm({ ...form, duracion_estimada_min: e.target.value })} placeholder="120" />
         </Field>
-        <Field label={t("sch.f.amount")} hint={t("sch.f.amountHint")}>
-          <input type="number" min={0} step="any" inputMode="decimal" className="input-base tabular" value={form.monto} onChange={(e) => setForm({ ...form, monto: e.target.value })} placeholder="0" />
+        <Field label={t("sch.f.amount")} hint={form.recargo
+          ? t("job.surchargeBase", { base: money(form.recargo.base, servicioSel?.moneda || "ISK", lang), motivo: t(`motivo.${form.recargo.motivo}`), pct: form.recargo.pct })
+          : t("sch.f.amountHint")}>
+          <input type="number" min={0} step="any" inputMode="decimal" className="input-base tabular" value={form.monto}
+            onChange={(e) => setForm({ ...form, monto: e.target.value, recargo: null })} placeholder="0" />
         </Field>
       </div>
       <Field label={t("sch.f.staff")} required>
@@ -253,6 +279,24 @@ function JobForm({ form, setForm, clients, staff, checklists, servicios, onSubmi
           {staff.length === 0 && <span style={{ fontSize: 12, color: C.muted }}>{t("sch.f.noStaff")}</span>}
         </div>
       </Field>
+      {recursos.length > 0 && (
+        <Field label={t("res.assign")} hint={t("res.assignHint")}>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", padding: 10, border: `1px solid ${C.border}`, borderRadius: 12, background: C.surface2 }}>
+            {recursos.filter((r) => r.activo || (form.recursos || []).includes(r.id)).map((r) => {
+              const on = (form.recursos || []).includes(r.id);
+              const ocupado = ocupados.get(r.id);
+              return (
+                <button type="button" key={r.id} aria-pressed={on} className={`chip ${on ? "active" : ""}`} onClick={() => toggleRecurso(r.id)}
+                  title={ocupado ? t("res.busy", { cliente: ocupado }) : r.identificador || ""}>
+                  {r.tipo === "vehiculo" ? <Truck size={13} /> : <Wrench size={13} />}
+                  {r.nombre}
+                  {ocupado && !on && <span style={{ color: "var(--amber)", fontWeight: 700 }}>•</span>}
+                </button>
+              );
+            })}
+          </div>
+        </Field>
+      )}
       <Field label={t("sch.f.notes")}><textarea rows={2} className="input-base" value={form.notas} onChange={(e) => setForm({ ...form, notas: e.target.value })} style={{ resize: "vertical" }} /></Field>
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, paddingTop: 12, borderTop: `1px solid ${C.borderSubtle}` }}>
         <button type="button" className="btn-ghost" onClick={onCancel} disabled={saving}>{t("common.cancel")}</button>
@@ -277,7 +321,8 @@ function GenerateModal({ clients, staff, servicios, jobs, checklists, patch, onC
   async function generar() {
     const rows = plan.map(({ servicio: s, fecha, key }) => {
       const client = clients.find((c) => c.id === s.cliente_id);
-      return { clienteId: s.cliente_id, servicio_id: s.id, ubicacionId: s.ubicacion_id || client?.ubicaciones?.[0]?.id || null, empleados: asignacion[s.id] || [], fecha, hora: s.hora || "08:00", checklistId: s.checklist_id || client?.checklistId || checklists[0]?.id || null, duracion_estimada_min: s.duracion_estimada_min, monto: s.tipo_monto === "por_trabajo" ? s.monto_acordado : null, recurrente_key: key };
+      const { monto, recargo } = montoDeTrabajo(s, fecha, s.hora || "08:00");
+      return { clienteId: s.cliente_id, servicio_id: s.id, ubicacionId: s.ubicacion_id || client?.ubicaciones?.[0]?.id || null, empleados: asignacion[s.id] || [], fecha, hora: s.hora || "08:00", checklistId: s.checklist_id || client?.checklistId || checklists[0]?.id || null, duracion_estimada_min: s.duracion_estimada_min, monto, recargo, recurrente_key: key };
     });
     setBusy(true);
     const saved = await run(() => api.insertJobs(rows), { ok: t("sch.g.generated", { n: rows.length }) });

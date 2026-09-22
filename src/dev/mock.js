@@ -20,9 +20,9 @@ const store = {
   ],
   staff: [
     { id: "e1", nombre: "Jorge Ojeda", rol: "admin", tipo: "Fijo", pago: "Sueldo fijo", idiomas: ["Español", "Inglés"], activo: true, estado: "activo", idioma: "es", auth_user_id: "auth-1", email: "jorgezyloclean@gmail.com", telefono: "+354 555 0001", destacado: false },
-    { id: "e2", nombre: "Ana Torres", rol: "operativo", tipo: "Fijo", pago: "Por hora", idiomas: ["Español"], activo: true, estado: "activo", idioma: "es", auth_user_id: "auth-2", email: "ana@example.com", telefono: "+354 555 0002", destacado: true, kennitala: "010190-1234" },
-    { id: "e3", nombre: "Tomasz Nowak", rol: "operativo", tipo: "Temporada", pago: "Por hora", idiomas: ["Polaco", "Inglés"], activo: true, estado: "activo", idioma: "en", auth_user_id: null, email: null, telefono: "", destacado: false },
-    { id: "e4", nombre: "Sigrún Ólafsdóttir", rol: "operativo", tipo: "Por hora", pago: "Por trabajo", idiomas: ["Islandés", "Inglés"], activo: true, estado: "activo", idioma: "is", auth_user_id: "auth-4", email: "sigrun@example.is", telefono: "", destacado: false },
+    { id: "e2", nombre: "Ana Torres", costo_hora: 2500, rol: "operativo", tipo: "Fijo", pago: "Por hora", idiomas: ["Español"], activo: true, estado: "activo", idioma: "es", auth_user_id: "auth-2", email: "ana@example.com", telefono: "+354 555 0002", destacado: true, kennitala: "010190-1234" },
+    { id: "e3", nombre: "Tomasz Nowak", costo_hora: 2500, rol: "operativo", tipo: "Temporada", pago: "Por hora", idiomas: ["Polaco", "Inglés"], activo: true, estado: "activo", idioma: "en", auth_user_id: null, email: null, telefono: "", destacado: false },
+    { id: "e4", nombre: "Sigrún Ólafsdóttir", costo_hora: 2800, rol: "operativo", tipo: "Por hora", pago: "Por trabajo", idiomas: ["Islandés", "Inglés"], activo: true, estado: "activo", idioma: "is", auth_user_id: "auth-4", email: "sigrun@example.is", telefono: "", destacado: false },
   ],
   checklists: [
     { id: "t1", nombre: "Oficinas — estándar", tareas: ["Vaciar papeleras", "Aspirar alfombras", "Limpiar escritorios", "Baños completos", "Cocina y microondas", "Cristales interiores"],
@@ -38,21 +38,27 @@ const store = {
     { id: "t3", nombre: "Airbnb — cambio de huésped", tareas: ["Cambiar sábanas", "Toallas limpias", "Baño completo", "Cocina y heladera", "Reponer amenities", "Foto final de cada ambiente"] },
   ],
   servicios_contratados: [
-    { id: "s1", cliente_id: "c1", ubicacion_id: "u1", tipo_servicio: "Limpieza comercial / oficinas", frecuencia: { tipo: "semanal", dias: ["Lun", "Mié", "Vie"], desde: "2026-08-01" }, hora: "07:00", monto_acordado: 380000, tipo_monto: "mensual", moneda: "ISK", duracion_estimada_min: 150, personas_previstas: 2, checklist_id: "t1", activo: true, created_at: "2026-08-01T00:00:00Z" },
-    { id: "s2", cliente_id: "c2", ubicacion_id: "u2", tipo_servicio: "Limpieza de locales / retail", frecuencia: { tipo: "diaria", dias: ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"], desde: "2026-08-15" }, hora: "06:00", monto_acordado: 290000, tipo_monto: "mensual", moneda: "ISK", duracion_estimada_min: 90, personas_previstas: 1, checklist_id: "t2", activo: true, created_at: "2026-08-15T00:00:00Z" },
-    { id: "s3", cliente_id: "c3", ubicacion_id: null, tipo_servicio: "Renta de corta estancia (Airbnb)", frecuencia: { tipo: "a_demanda", notas: "Cuando avisa el host" }, hora: "11:00", monto_acordado: 18000, tipo_monto: "por_trabajo", moneda: "ISK", duracion_estimada_min: 120, personas_previstas: 1, checklist_id: "t3", activo: true, created_at: "2026-08-20T00:00:00Z" },
+    { id: "s1", cliente_id: "c1", ubicacion_id: "u1", tipo_servicio: "Limpieza comercial / oficinas", frecuencia: { tipo: "semanal", dias: ["Lun", "Mié", "Vie"], desde: "2026-08-01" }, hora: "07:00", monto_acordado: 380000, tipo_monto: "mensual", moneda: "ISK", recargos: {}, duracion_estimada_min: 150, personas_previstas: 2, checklist_id: "t1", activo: true, created_at: "2026-08-01T00:00:00Z" },
+    { id: "s2", cliente_id: "c2", ubicacion_id: "u2", tipo_servicio: "Limpieza de locales / retail", frecuencia: { tipo: "diaria", dias: ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"], desde: "2026-08-15" }, hora: "06:00", monto_acordado: 290000, tipo_monto: "mensual", moneda: "ISK", recargos: {}, duracion_estimada_min: 90, personas_previstas: 1, checklist_id: "t2", activo: true, created_at: "2026-08-15T00:00:00Z" },
+    { id: "s3", cliente_id: "c3", ubicacion_id: null, tipo_servicio: "Renta de corta estancia (Airbnb)", frecuencia: { tipo: "a_demanda", notas: "Cuando avisa el host" }, hora: "11:00", monto_acordado: 18000, tipo_monto: "por_trabajo", moneda: "ISK", recargos: { finde: 65, feriado: 65, nocturno: 15 }, duracion_estimada_min: 120, personas_previstas: 1, checklist_id: "t3", activo: true, created_at: "2026-08-20T00:00:00Z" },
   ],
   jobs: [],
   registro_horas: [],
   solicitudes: [{ id: "q1", cliente_id: "c3", tipo: "Limpieza profunda antes de temporada", fecha: addDays(hoy, 5), notas: "Los dos apartamentos, si puede ser el mismo día.", estado: "nueva", created_at: iso(now) }],
   portal_tokens: [{ token: "demo-token-fly-over", cliente_id: "c1", activo: true, created_at: "2026-09-01T00:00:00Z" }],
   mensajes: [],
+  recursos: [
+    { id: "rc1", nombre: "Kangoo blanca", tipo: "vehiculo", identificador: "AB-123", activo: true, notas: "" },
+    { id: "rc2", nombre: "Hidrolavadora Kärcher", tipo: "maquina", identificador: "K5-8812", activo: true, notas: "Revisar manguera" },
+    { id: "rc3", nombre: "Pulidora industrial", tipo: "maquina", identificador: "", activo: true, notas: "" },
+    { id: "rc4", nombre: "Dacia Dokker", tipo: "vehiculo", identificador: "KL-904", activo: false, notas: "En el taller" },
+  ],
 };
 
 // Historial de trabajos: 3 semanas hacia atrás + hoy + mañana
 function seedJobs() {
   let n = 0;
-  const mk = (p) => ({ id: `j${++n}`, tareasCompletadas: {}, tareas_no_hechas: {}, fotos: [], monto: null, incidente: null, ...p });
+  const mk = (p) => ({ id: `j${++n}`, tareasCompletadas: {}, tareas_no_hechas: {}, fotos: [], monto: null, incidente: null, recargo: null, recursos: [], ...p });
   for (let d = -21; d <= 2; d++) {
     const fecha = addDays(hoy, d);
     const wd = weekdayIndex(fecha);

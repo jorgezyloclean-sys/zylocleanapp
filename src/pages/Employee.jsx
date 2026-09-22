@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import {
   LogOut, Clock, History, MapPin, ChevronRight, KeyRound, Wifi, Phone, Package, Eye, StickyNote, Camera, AlertTriangle, CheckCheck, X, XCircle, CheckCircle2, Users,
-  MessageSquare,
+  MessageSquare, Truck, Wrench,
 } from "lucide-react";
 import { Avatar, C, Field, LangSwitch, ThemeSwitch, Modal, ProgressBar, StatusBadge, LiveTimer, StarRating, SignedImg, PhotoLink, Pill, FONT_DISPLAY, FONT_MONO } from "../components/ui.jsx";
 import { tipoFotoLabel } from "../components/PhotosField.jsx";
@@ -20,7 +20,7 @@ import { localizeChecklists } from "../lib/checklist";
 import JobChat from "../components/JobChat.jsx";
 import { noLeidosPorJob } from "../lib/chat";
 
-export default function EmployeeView({ profile, onLogout, onLangChange, clients, jobs, checklists: rawChecklists, registros, mensajes = [], staff = [], portalTokens = [], patch }) {
+export default function EmployeeView({ profile, onLogout, onLangChange, clients, jobs, checklists: rawChecklists, registros, mensajes = [], staff = [], portalTokens = [], recursos = [], patch }) {
   const { t, lang } = useT();
   const checklists = useMemo(() => localizeChecklists(rawChecklists, lang), [rawChecklists, lang]);
   const sinLeer = useMemo(() => noLeidosPorJob(mensajes, profile.id), [mensajes, profile.id]);
@@ -73,7 +73,8 @@ export default function EmployeeView({ profile, onLogout, onLangChange, clients,
       <div style={{ maxWidth: 560, margin: "0 auto", padding: "16px 16px 24px", display: "flex", flexDirection: "column", gap: 14 }}>
         {tab === "hoy" && pendientes.map((job, i) => (
           <JobCard key={job.id} job={job} me={me} client={clients.find((c) => c.id === job.clienteId)} checklist={checklists.find((c) => c.id === job.checklistId)}
-            registros={registros} patch={patch} dayLabel={dayLabel(job.fecha)} delay={i * 60} onModal={(type) => setModal({ type, job })} unread={sinLeer[job.id] || 0} nMsgs={mensajes.filter((m) => m.job_id === job.id).length} />
+            registros={registros} patch={patch} dayLabel={dayLabel(job.fecha)} delay={i * 60} onModal={(type) => setModal({ type, job })} unread={sinLeer[job.id] || 0} nMsgs={mensajes.filter((m) => m.job_id === job.id).length}
+            recursos={(job.recursos || []).map((id) => recursos.find((r) => r.id === id)).filter(Boolean)} />
         ))}
         {tab === "hoy" && pendientes.length === 0 && (
           <div style={{ textAlign: "center", padding: "40px 20px", color: C.muted }}><CheckCircle2 size={36} color="var(--primary-bright)" style={{ margin: "0 auto 12px" }} /><p style={{ fontWeight: 600, color: C.ink }}>{t("emp.noPending")}</p></div>
@@ -119,7 +120,7 @@ export default function EmployeeView({ profile, onLogout, onLangChange, clients,
 }
 
 /* ================================================================ Tarjeta */
-function JobCard({ job, me, client, checklist, registros, patch, dayLabel, delay, onModal, unread = 0, nMsgs = 0 }) {
+function JobCard({ job, me, client, checklist, registros, patch, dayLabel, delay, onModal, unread = 0, nMsgs = 0, recursos = [] }) {
   const { t } = useT();
   const [showInfo, setShowInfo] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -295,6 +296,13 @@ function JobCard({ job, me, client, checklist, registros, patch, dayLabel, delay
                 <button onClick={() => removeFoto(p)} aria-label={t("common.delete")} style={{ position: "absolute", top: -6, right: -6, width: 22, height: 22, borderRadius: "50%", background: "var(--danger)", border: `2px solid ${C.surface}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: 0 }}><X size={11} color="#fff" strokeWidth={3} /></button>
               </div>
             ))}
+          </div>
+        )}
+
+        {recursos.length > 0 && (
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", padding: "0 18px 4px" }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: C.muted, textTransform: "uppercase" }}>{t("res.takes")}:</span>
+            {recursos.map((r) => <Pill key={r.id} tone="neutral" icon={r.tipo === "vehiculo" ? Truck : Wrench}>{r.nombre}</Pill>)}
           </div>
         )}
 
