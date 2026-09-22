@@ -11,6 +11,7 @@ import SchedulePage from "../src/pages/Schedule.jsx";
 import ChecklistsPage from "../src/pages/Checklists.jsx";
 import ReportsPage from "../src/pages/Reports.jsx";
 import ProfitabilityPage from "../src/pages/Profitability.jsx";
+import ResourcesPage from "../src/pages/Resources.jsx";
 import EmployeeView from "../src/pages/Employee.jsx";
 import LoginScreen from "../src/pages/Login.jsx";
 import AdminShell from "../src/pages/AdminShell.jsx";
@@ -37,7 +38,11 @@ const registros = [
 ];
 const solicitudes = [{ id: "q1", cliente_id: "c1", tipo: "Ventanas", fecha: hoy, notas: "urgente", estado: "nueva" }];
 const portalTokens = [{ token: "abc123abc123", cliente_id: "c1", activo: true, created_at: "2026-09-10T00:00:00Z" }];
-const common = { clients, staff, checklists, servicios, jobs, registros, solicitudes, portalTokens, patch: () => {}, profile: staff[0], goTo: () => {} };
+const recursos = [
+  { id: "rc1", nombre: "Kangoo blanca", tipo: "vehiculo", identificador: "AB-123", staff_id: "e2", activo: true },
+  { id: "rc2", nombre: "Pulidora", tipo: "maquina", identificador: null, staff_id: null, activo: false },
+];
+const common = { clients, staff, checklists, servicios, jobs, registros, solicitudes, portalTokens, recursos, mensajes: [], patch: () => {}, profile: staff[0], goTo: () => {} };
 
 const cases = {
   Login: <LoginScreen onLogin={() => {}} />,
@@ -48,7 +53,8 @@ const cases = {
   Checklists: <ChecklistsPage {...common} />,
   Reports: <ReportsPage {...common} />,
   Profitability: <ProfitabilityPage {...common} />,
-  Employee_es: <EmployeeView profile={staff[1]} onLogout={() => {}} onLangChange={() => {}} clients={clients} jobs={jobs} checklists={checklists} registros={registros} patch={() => {}} />,
+  Resources: <ResourcesPage {...common} />,
+  Employee_es: <EmployeeView profile={staff[1]} onLogout={() => {}} onLangChange={() => {}} clients={clients} jobs={jobs} checklists={checklists} registros={registros} recursos={recursos} staff={staff} patch={() => {}} />,
   Shell: <AdminShell profile={staff[0]} onLogout={() => {}} page="dashboard" setPage={() => {}} badges={{ dashboard: 2 }}><p>ok</p></AdminShell>,
 };
 

@@ -53,7 +53,7 @@ src/
   dev/mock.js             datos en memoria para el modo demo
 supabase/
   migrations/             0001 baseline (estado del prototipo) → 0002 modelo v2 + auth + RLS → 0003 storage privado
-                          → 0004 traducciones de checklists → 0005 mensajes por trabajo (chat beta) → 0006 vista staff_nombres + publicación realtime → 0007 idioma del cliente → 0008 recargos, costo por hora y recursos
+                          → 0004 traducciones de checklists → 0005 mensajes por trabajo (chat beta) → 0006 vista staff_nombres + publicación realtime → 0007 idioma del cliente → 0008 recargos, costo por hora y recursos → 0009 responsable fijo de cada recurso
   functions/send-email    correo por SMTP de Gmail (solo usuarios autenticados, sin contraseña en el código)
   functions/admin-users   crea / resetea / elimina usuarios de Auth del personal (solo admin)
   functions/_pegar_en_el_panel  copias de un solo archivo de las dos funciones, para
@@ -93,7 +93,7 @@ campos económicos o de asignación del trabajo.
 ## Poner en marcha un proyecto Supabase
 
 1. **SQL Editor**, en orden: `0001_baseline.sql` → `0002_v2_modelo_y_seguridad.sql` →
-   `0003_storage_privado.sql` → `0004_checklists_traducciones.sql` → `0005_mensajes.sql` → `0006_staff_nombres.sql` → `0007_idioma_cliente.sql` → `0008_tarifas_recursos_costo.sql`. Sobre una base con datos del prototipo, la 0002 migra
+   `0003_storage_privado.sql` → `0004_checklists_traducciones.sql` → `0005_mensajes.sql` → `0006_staff_nombres.sql` → `0007_idioma_cliente.sql` → `0008_tarifas_recursos_costo.sql` → `0009_recursos_responsable.sql`. Sobre una base con datos del prototipo, la 0002 migra
    (fechas `"Hoy"`/`"Mañana"` a `date`, frecuencia del cliente a servicio, horas a
    `registro_horas`, contraseñas en claro eliminadas).
 2. **Primer admin**: Authentication → Users → *Add user* (auto confirm). Luego:

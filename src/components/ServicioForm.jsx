@@ -95,6 +95,8 @@ export default function ServicioForm({ client, initial, checklists, onSave, onCa
           <p style={{ fontSize: 11.5, color: C.muted, marginTop: 2, marginBottom: 10 }}>
             {form.tipo_monto === "por_trabajo" ? t("sf.surchargesHint") : t("sf.surchargesMonthly")}
           </p>
+          {/* El monto es lo que se le cobra al cliente; las horas se cuentan aparte. */}
+          <p style={{ fontSize: 11.5, color: C.muted2, marginBottom: 10, lineHeight: 1.5 }}>{t("sf.hoursNote")}</p>
           {form.tipo_monto === "por_trabajo" && (
             <div className="form-grid-3">
               {MOTIVOS.map((m) => (

@@ -33,6 +33,8 @@ export default function EmployeeView({ profile, onLogout, onLangChange, clients,
   const [modal, setModal] = useState(null); // {type: 'incidente'|'no_realizado'|'finish', job}
   const stats = { cumplimiento: avgChecklistPct(mis, checklists), rating: avgRating(mis), completados: historial.filter((j) => j.estado === "finalizado").length };
   const pendHoy = pendientes.filter((j) => j.fecha <= hoy).length;
+  // Vehículos o máquinas que están a su cargo de forma fija (no las de un trabajo puntual).
+  const aCargo = useMemo(() => recursos.filter((r) => r.staff_id === me && r.activo !== false), [recursos, me]);
 
   const dayLabel = (iso) => iso === hoy ? t("common.today") : iso === addDays(hoy, 1) ? t("common.tomorrow") : formatFecha(iso, lang);
 
@@ -62,6 +64,19 @@ export default function EmployeeView({ profile, onLogout, onLangChange, clients,
             </div>
           ))}
         </div>
+        {aCargo.length > 0 && (
+          <div className="animate-fadeUp" style={{ marginTop: 12, background: C.surface, borderRadius: 16, padding: "12px 14px", border: `1px solid ${C.border}`, boxShadow: "var(--shadow-sm)" }}>
+            <p style={{ fontSize: 10, color: C.muted, fontWeight: 600, textTransform: "uppercase", letterSpacing: .3 }}>{t("emp.myResources")}</p>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
+              {aCargo.map((r) => (
+                <Pill key={r.id} tone="primary" icon={r.tipo === "vehiculo" ? Truck : Wrench}>
+                  {[r.nombre, r.identificador].filter(Boolean).join(" · ")}
+                </Pill>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="seg" style={{ display: "flex", marginTop: 12, width: "100%" }} role="tablist">
           {[{ id: "hoy", label: `${t("emp.tab.today")} (${pendientes.length})`, icon: Clock }, { id: "historial", label: `${t("emp.tab.history")} (${historial.length})`, icon: History }].map((x) => {
             const Icon = x.icon;

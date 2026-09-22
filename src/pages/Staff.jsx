@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Plus, Pencil, Trash2, Star, Languages, Phone, KeyRound, Download, ShieldOff, UserCheck, UserX, Users, Mail, Wallet } from "lucide-react";
+import { Plus, Pencil, Trash2, Star, Languages, Phone, KeyRound, Download, ShieldOff, UserCheck, UserX, Users, Mail, Wallet, Truck, Wrench } from "lucide-react";
 import { Avatar, C, EmptyState, Field, Modal, PageHeader, Pill, ProgressBar, Segmented, StarRating, Toggle, useConfirm, Banner, FONT_MONO } from "../components/ui.jsx";
 import { LANGS, useT } from "../i18n/index.jsx";
 import { formatKennitala, hoursLabel, money } from "../lib/format";
@@ -16,7 +16,7 @@ const pagoLabel = (v, t) => t(`st.f.pago.${PAGO_KEY[v] || "porHora"}`);
 
 const emptyStaff = () => ({ nombre: "", rol: "operativo", tipo: "Fijo", idiomas: [], pago: "Por hora", costo_hora: "", telefono: "", email: "", kennitala: "", destacado: false, estado: "activo", activo: true, idioma: "es", "señal": "buena" });
 
-export default function StaffPage({ staff, jobs, checklists, clients, registros, profile, patch }) {
+export default function StaffPage({ staff, jobs, checklists, clients, registros, recursos = [], profile, patch }) {
   const { t } = useT();
   const [modal, setModal] = useState(null);
   const [filter, setFilter] = useState("activos");
@@ -103,7 +103,7 @@ export default function StaffPage({ staff, jobs, checklists, clients, registros,
         </Modal>
       )}
       {modal?.mode === "view" && (
-        <StaffDetail item={staff.find((s) => s.id === modal.item.id) || modal.item} jobs={jobs} clients={clients} registros={registros} checklists={checklists} profile={profile} patch={patch}
+        <StaffDetail item={staff.find((s) => s.id === modal.item.id) || modal.item} jobs={jobs} clients={clients} registros={registros} checklists={checklists} recursos={recursos} profile={profile} patch={patch}
           onClose={() => setModal(null)} onEdit={() => setModal({ mode: "edit", item: modal.item })} onDelete={() => remove(modal.item)} confirm={confirm} />
       )}
       {confirmDialog}
@@ -164,7 +164,7 @@ function StaffForm({ initial, onSave, onCancel, saving, isSelf }) {
   );
 }
 
-function StaffDetail({ item: s, jobs, clients, registros, checklists, profile, patch, onClose, onEdit, onDelete, confirm }) {
+function StaffDetail({ item: s, jobs, clients, registros, checklists, recursos = [], profile, patch, onClose, onEdit, onDelete, confirm }) {
   const { t, lang } = useT();
   const [periodo, setPeriodo] = useState("mes");
   const presets = periodPresets();
@@ -210,6 +210,7 @@ function StaffDetail({ item: s, jobs, clients, registros, checklists, profile, p
   }
 
   const horas = registros.filter((r) => r.personal_id === s.id && r.fin).reduce((a, r) => a + (new Date(r.fin) - new Date(r.inicio)) / 3_600_000, 0);
+  const aCargo = recursos.filter((r) => r.staff_id === s.id);
 
   return (
     <Modal title={s.nombre} subtitle={`${s.rol === "admin" ? t("st.admin") : t("st.operativo")} · ${tipoLabel(s.tipo, t)} · ${pagoLabel(s.pago, t)}`} onClose={onClose} gradient
@@ -250,6 +251,22 @@ function StaffDetail({ item: s, jobs, clients, registros, checklists, profile, p
           <p style={{ fontSize: 12.5, color: C.muted }}>{t("st.pay.noRate", { h: hoursLabel(pago.horas), n: pago.trabajos })}</p>
         )}
         <p style={{ fontSize: 11, color: C.muted2, marginTop: 8 }}>{t("st.pay.note")}</p>
+      </div>
+
+      {/* Qué vehículo o máquina tiene a cargo esta persona. */}
+      <h4 className="section-title"><Truck size={14} /> {t("res.staffTitle")}</h4>
+      <div style={{ marginBottom: 20 }}>
+        {aCargo.length === 0 ? (
+          <p style={{ fontSize: 12.5, color: C.muted }}>{t("res.staffEmpty")}</p>
+        ) : (
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {aCargo.map((r) => (
+              <Pill key={r.id} tone={r.activo === false ? "neutral" : "primary"} icon={r.tipo === "vehiculo" ? Truck : Wrench}>
+                {[r.nombre, r.identificador].filter(Boolean).join(" · ")}
+              </Pill>
+            ))}
+          </div>
+        )}
       </div>
 
       <h4 className="section-title"><KeyRound size={14} /> {t("st.access")}</h4>

@@ -7,6 +7,9 @@ import { Mark, Wordmark } from "../components/Brand.jsx";
 import { Avatar, C, LangSwitch, ThemeSwitch } from "../components/ui.jsx";
 import { useT } from "../i18n/index.jsx";
 
+// Fecha y commit del build. `__BUILD__` lo inyecta vite.config.js.
+const BUILD = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
+
 export const NAV_ITEMS = [
   { id: "dashboard", key: "nav.dashboard", icon: LayoutDashboard },
   { id: "clientes", key: "nav.clientes", icon: Building2 },
@@ -62,6 +65,7 @@ export default function AdminShell({ profile, onLogout, onLangChange, children, 
               <div style={{ overflow: "hidden" }}>
                 <p style={{ color: "#fff", fontWeight: 600, fontSize: 12, lineHeight: 1.3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{profile.nombre}</p>
                 <p style={{ color: "rgba(255,255,255,.45)", fontSize: 10 }}>{t("nav.admin")}</p>
+                <p title={t("nav.version")} style={{ color: "rgba(255,255,255,.28)", fontSize: 9.5, whiteSpace: "nowrap" }}>{BUILD}</p>
               </div>
             </div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 10 }}>

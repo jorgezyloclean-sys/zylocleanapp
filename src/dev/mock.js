@@ -48,10 +48,10 @@ const store = {
   portal_tokens: [{ token: "demo-token-fly-over", cliente_id: "c1", activo: true, created_at: "2026-09-01T00:00:00Z" }],
   mensajes: [],
   recursos: [
-    { id: "rc1", nombre: "Kangoo blanca", tipo: "vehiculo", identificador: "AB-123", activo: true, notas: "" },
-    { id: "rc2", nombre: "Hidrolavadora Kärcher", tipo: "maquina", identificador: "K5-8812", activo: true, notas: "Revisar manguera" },
-    { id: "rc3", nombre: "Pulidora industrial", tipo: "maquina", identificador: "", activo: true, notas: "" },
-    { id: "rc4", nombre: "Dacia Dokker", tipo: "vehiculo", identificador: "KL-904", activo: false, notas: "En el taller" },
+    { id: "rc1", nombre: "Kangoo blanca", tipo: "vehiculo", identificador: "AB-123", staff_id: "e2", activo: true, notas: "" },
+    { id: "rc2", nombre: "Hidrolavadora Kärcher", tipo: "maquina", identificador: "K5-8812", staff_id: "e4", activo: true, notas: "Revisar manguera" },
+    { id: "rc3", nombre: "Pulidora industrial", tipo: "maquina", identificador: "", staff_id: null, activo: true, notas: "" },
+    { id: "rc4", nombre: "Dacia Dokker", tipo: "vehiculo", identificador: "KL-904", staff_id: null, activo: false, notas: "En el taller" },
   ],
 };
 

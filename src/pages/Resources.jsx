@@ -1,7 +1,7 @@
 // Vehículos y maquinaria: alta simple y a quién se le asignó hoy.
 // No es inventario ni stock (fuera de alcance): es saber qué se llevó cada trabajo.
 import { useState } from "react";
-import { Plus, Truck, Wrench, Trash2, Pencil } from "lucide-react";
+import { Plus, Truck, Wrench, Trash2, Pencil, User } from "lucide-react";
 import { C, EmptyState, Field, Modal, PageHeader, Pill, Segmented, Toggle, useConfirm } from "../components/ui.jsx";
 import { useT } from "../i18n/index.jsx";
 import { formatFecha, todayISO } from "../lib/dates";
@@ -9,9 +9,9 @@ import { run } from "../lib/toast";
 import * as api from "../data/api";
 
 const TIPOS = ["vehiculo", "maquina"];
-const empty = () => ({ nombre: "", tipo: "vehiculo", identificador: "", activo: true, notas: "" });
+const empty = () => ({ nombre: "", tipo: "vehiculo", identificador: "", staff_id: "", activo: true, notas: "" });
 
-export default function ResourcesPage({ recursos, jobs, clients, patch }) {
+export default function ResourcesPage({ recursos, jobs, clients, staff = [], patch }) {
   const { t, lang } = useT();
   const [filtro, setFiltro] = useState("todos");
   const [modal, setModal] = useState(null);
@@ -27,7 +27,7 @@ export default function ResourcesPage({ recursos, jobs, clients, patch }) {
 
   async function guardar(form) {
     setSaving(true);
-    const row = { ...form, nombre: form.nombre.trim(), identificador: form.identificador?.trim() || null };
+    const row = { ...form, nombre: form.nombre.trim(), identificador: form.identificador?.trim() || null, staff_id: form.staff_id || null };
     const saved = modal.item
       ? await run(() => api.updateRecurso(modal.item.id, row), { ok: t("res.saved") })
       : await run(() => api.insertRecurso(row), { ok: t("res.created") });
@@ -78,6 +78,7 @@ export default function ResourcesPage({ recursos, jobs, clients, patch }) {
                 </div>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
                   {!r.activo && <Pill tone="neutral">{t("res.inactive")}</Pill>}
+                  {r.staff_id && <Pill tone="primary" icon={User}>{t("res.owner", { name: staff.find((x) => x.id === r.staff_id)?.nombre || "—" })}</Pill>}
                   {job
                     ? <Pill tone="amber">{t("res.inUse", { cliente: cliente?.nombre || "?", hora: job.hora })}</Pill>
                     : r.activo ? <Pill tone="success">{t("res.free")}</Pill> : null}
@@ -91,7 +92,7 @@ export default function ResourcesPage({ recursos, jobs, clients, patch }) {
 
       {modal && (
         <Modal title={modal.item ? t("res.edit") : t("res.new")} subtitle={formatFecha(hoy, lang)} onClose={() => setModal(null)}>
-          <ResourceForm form={modal.form} setForm={(f) => setModal({ ...modal, form: f })} onSave={guardar} onCancel={() => setModal(null)} saving={saving} />
+          <ResourceForm form={modal.form} setForm={(f) => setModal({ ...modal, form: f })} staff={staff} onSave={guardar} onCancel={() => setModal(null)} saving={saving} />
         </Modal>
       )}
       {confirmDialog}
@@ -99,8 +100,9 @@ export default function ResourcesPage({ recursos, jobs, clients, patch }) {
   );
 }
 
-function ResourceForm({ form, setForm, onSave, onCancel, saving }) {
+function ResourceForm({ form, setForm, staff = [], onSave, onCancel, saving }) {
   const { t } = useT();
+  const personas = staff.filter((x) => x.activo !== false || x.id === form.staff_id).sort((a, b) => a.nombre.localeCompare(b.nombre));
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
   return (
     <form onSubmit={(e) => { e.preventDefault(); if (form.nombre.trim()) onSave(form); }} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -114,9 +116,17 @@ function ResourceForm({ form, setForm, onSave, onCancel, saving }) {
           </select>
         </Field>
       </div>
-      <Field label={t("res.f.id")} hint={t("res.f.idHint")}>
-        <input className="input-base" value={form.identificador || ""} onChange={set("identificador")} />
-      </Field>
+      <div className="form-grid-2">
+        <Field label={t("res.f.id")} hint={t("res.f.idHint")}>
+          <input className="input-base" value={form.identificador || ""} onChange={set("identificador")} />
+        </Field>
+        <Field label={t("res.f.staff")} hint={t("res.f.staffHint")}>
+          <select className="input-base" value={form.staff_id || ""} onChange={set("staff_id")}>
+            <option value="">{t("res.f.staffNone")}</option>
+            {personas.map((x) => <option key={x.id} value={x.id}>{x.nombre}</option>)}
+          </select>
+        </Field>
+      </div>
       <Field label={t("common.notes")}>
         <textarea rows={2} className="input-base" value={form.notas || ""} onChange={set("notas")} style={{ resize: "vertical" }} />
       </Field>

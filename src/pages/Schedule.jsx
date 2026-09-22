@@ -221,7 +221,13 @@ function JobForm({ form, setForm, clients, staff, checklists, servicios, recurso
   const ocupados = new Map();
   jobs.filter((j) => j.fecha === form.fecha && j.id !== editId && j.estado !== "no_realizado")
     .forEach((j) => (j.recursos || []).forEach((r) => ocupados.set(r, clients.find((c) => c.id === j.clienteId)?.nombre || "?")));
-  const toggleEmp = (id) => setForm({ ...form, empleados: form.empleados.includes(id) ? form.empleados.filter((e) => e !== id) : [...form.empleados, id] });
+  // Al sumar a una persona se marcan los recursos que tiene a cargo (se pueden desmarcar).
+  const toggleEmp = (id) => {
+    if (form.empleados.includes(id)) { setForm({ ...form, empleados: form.empleados.filter((e) => e !== id) }); return; }
+    const suyos = recursos.filter((r) => r.staff_id === id && r.activo !== false).map((r) => r.id);
+    const yaPuestos = form.recursos || [];
+    setForm({ ...form, empleados: [...form.empleados, id], recursos: [...yaPuestos, ...suyos.filter((x) => !yaPuestos.includes(x))] });
+  };
 
   return (
     <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -285,11 +291,13 @@ function JobForm({ form, setForm, clients, staff, checklists, servicios, recurso
             {recursos.filter((r) => r.activo || (form.recursos || []).includes(r.id)).map((r) => {
               const on = (form.recursos || []).includes(r.id);
               const ocupado = ocupados.get(r.id);
+              const duenio = r.staff_id ? staff.find((x) => x.id === r.staff_id) : null;
               return (
                 <button type="button" key={r.id} aria-pressed={on} className={`chip ${on ? "active" : ""}`} onClick={() => toggleRecurso(r.id)}
                   title={ocupado ? t("res.busy", { cliente: ocupado }) : r.identificador || ""}>
                   {r.tipo === "vehiculo" ? <Truck size={13} /> : <Wrench size={13} />}
                   {r.nombre}
+                  {duenio && <span style={{ color: C.muted, fontWeight: 500 }}>{t("res.ofStaff", { name: duenio.nombre.split(" ")[0] })}</span>}
                   {ocupado && !on && <span style={{ color: "var(--amber)", fontWeight: 700 }}>•</span>}
                 </button>
               );
