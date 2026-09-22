@@ -85,6 +85,10 @@ k("period.lastMonth", "Mes pasado", "Last month", "Síðasti mánuður")
 k("period.quarter", "3 meses", "3 months", "3 mánuðir")
 k("period.range", "Rango", "Range", "Tímabil")
 k("period.label", "Período", "Period", "Tímabil")
+k("err.title", "Algo salió mal en esta pantalla", "Something went wrong on this screen", "Eitthvað fór úrskeiðis á þessum skjá")
+k("err.body", "El resto del sistema sigue funcionando. Probá de nuevo o recargá la página; si vuelve a pasar, avisanos con lo que estabas haciendo.", "The rest of the system keeps working. Try again or reload the page; if it happens again, tell us what you were doing.", "Restin af kerfinu virkar áfram. Reyndu aftur eða endurhlaðið síðuna; ef þetta gerist aftur, láttu okkur vita hvað þú varst að gera.")
+k("err.retry", "Reintentar", "Try again", "Reyna aftur")
+k("err.reload", "Recargar", "Reload", "Endurhlaða")
 
 # estados
 k("estado.programado", "Programado", "Scheduled", "Áætlað")

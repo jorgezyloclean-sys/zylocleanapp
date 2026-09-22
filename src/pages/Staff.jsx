@@ -167,7 +167,8 @@ function StaffForm({ initial, onSave, onCancel, saving, isSelf }) {
 function StaffDetail({ item: s, jobs, clients, registros, checklists, profile, patch, onClose, onEdit, onDelete, confirm }) {
   const { t, lang } = useT();
   const [periodo, setPeriodo] = useState("mes");
-  const rango = periodPresets()[periodo];
+  const presets = periodPresets();
+  const rango = presets[periodo] || presets.mes;
   const pago = costoPersona(s, registros, jobs, rango.from, rango.to);
   const [userForm, setUserForm] = useState({ email: s.email || "", password: "" });
   const [busy, setBusy] = useState(false);
@@ -237,7 +238,7 @@ function StaffDetail({ item: s, jobs, clients, registros, checklists, profile, p
       <div style={{ padding: 12, borderRadius: 12, background: C.surface2, border: `1px solid ${C.borderSubtle}`, marginBottom: 20 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
           <Segmented value={periodo} onChange={setPeriodo} ariaLabel={t("st.pay.period")} options={[
-            { id: "mes", label: t("period.month") }, { id: "mesPasado", label: t("period.lastMonth") }, { id: "semana", label: t("period.week") },
+            { id: "mes", label: t("period.month") }, { id: "mes_pasado", label: t("period.lastMonth") }, { id: "semana", label: t("period.week") },
           ]} />
         </div>
         {pago.tarifa > 0 ? (

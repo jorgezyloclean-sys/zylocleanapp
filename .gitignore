@@ -6,3 +6,4 @@ dist/
 !.env.example
 !.env.demo
 .DS_Store
+correos-preview.html

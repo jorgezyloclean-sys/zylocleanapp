@@ -163,14 +163,18 @@ export function exportStaffData({ staff, jobs, registros, clients }) {
 }
 
 /* ------------------------------------------------------------------ email */
+/** Correos "mandados" en modo demo, para poder mirarlos (ver scripts/correos_preview.jsx). */
+const enviados = [];
+export const __demoEmails = () => enviados;
+
 export async function sendNotificationEmail({ to, subject, html, type = "general" }) {
   if (!to) return false;
   if (MOCK) {
     // En demo no se manda nada: se guarda para poder mirar el correo tal como se vería.
     console.info(`[demo] email ${type} → ${to}: ${subject}`);
-    if (typeof window !== "undefined") {
-      window.__demoEmails = [{ to, subject, html, type, at: new Date().toISOString() }, ...(window.__demoEmails || [])].slice(0, 20);
-    }
+    enviados.unshift({ to, subject, html, type, at: new Date().toISOString() });
+    enviados.length = Math.min(enviados.length, 20);
+    if (typeof window !== "undefined") window.__demoEmails = enviados;
     return true;
   }
   const { data, error } = await supabase.functions.invoke("send-email", { body: { to, subject, html, type } });

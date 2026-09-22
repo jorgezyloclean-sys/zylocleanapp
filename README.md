@@ -29,7 +29,8 @@ cp .env.example .env    # completar VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY
 npm run dev
 ```
 
-Otros comandos: `npm run build`, `npm run lint`, `npm run smoke` (renderiza todas
+Otros comandos: `npm run build`, `npm run lint`, `npm run correos` (genera
+`correos-preview.html` con todos los correos, sin mandar nada), `npm run smoke` (renderiza todas
 las páginas en los tres idiomas con datos de prueba y falla si alguna rompe).
 
 ---
@@ -41,7 +42,8 @@ src/
   App.jsx                 raíz: auth, carga de datos, ruteo por rol
   pages/                  una página por sección (Dashboard, Clients, Staff, Schedule,
                           Checklists, Reports, Profitability, Employee, Portal, Login)
-  components/             UI compartida (ui.jsx), formularios, JobDetailModal, DateField
+  components/             UI compartida (ui.jsx), formularios, JobDetailModal, DateField,
+                          ErrorBoundary (una pantalla que rompe no tumba la app entera)
   data/                   useAuth (sesión + perfil), useAppData (carga + realtime), api (escrituras)
   lib/                    dates, feriados (Islandia, calculados), tarifas (recargos),
                           format, stats (horas, cumplimiento, rentabilidad, costo por persona), recurrencia,
@@ -58,6 +60,7 @@ supabase/
 scripts/
   i18n_build.py           tabla única (clave, es, en, is) → diccionarios. Editar acá, no en src/i18n
   smoke.jsx               smoke test SSR
+  correos_preview.jsx     vista previa de los correos en los tres idiomas
 ```
 
 ---

@@ -9,6 +9,7 @@
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview",
+    "correos": "vite build --ssr scripts/correos_preview.jsx --outDir .smoke --mode demo --logLevel error && node .smoke/correos_preview.js",
     "smoke": "vite build --ssr scripts/smoke.jsx --outDir .smoke --logLevel error && node .smoke/smoke.js",
     "staging": "vite --mode staging"
   },

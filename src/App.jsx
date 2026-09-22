@@ -19,6 +19,7 @@ import ProfitabilityPage from "./pages/Profitability.jsx";
 import EmployeeView from "./pages/Employee.jsx";
 import ClientPortal from "./pages/Portal.jsx";
 import { noLeidos } from "./lib/chat";
+import ErrorBoundary from "./components/ErrorBoundary.jsx";
 
 const PAGE_KEY = "zyloclean_page";
 
@@ -66,7 +67,7 @@ function AuthedApp() {
   if (data.loading && data.jobs.length === 0) return <Spinner label={t("common.loading")} />;
 
   if (profile.rol !== "admin") {
-    return <EmployeeView profile={profile} onLogout={logout} onLangChange={onLangChange} clients={data.clients} jobs={data.jobs} checklists={data.checklists} registros={data.registros} mensajes={data.mensajes} staff={data.staffNombres.length ? data.staffNombres : data.staff} portalTokens={data.portalTokens} recursos={data.recursos} patch={data.patch} />;
+    return <ErrorBoundary labels={{ title: t("err.title"), body: t("err.body"), retry: t("err.retry"), reload: t("err.reload") }}><EmployeeView profile={profile} onLogout={logout} onLangChange={onLangChange} clients={data.clients} jobs={data.jobs} checklists={data.checklists} registros={data.registros} mensajes={data.mensajes} staff={data.staffNombres.length ? data.staffNombres : data.staff} portalTokens={data.portalTokens} recursos={data.recursos} patch={data.patch} /></ErrorBoundary>;
   }
 
   const nuevas = data.solicitudes.filter((s) => s.estado === "nueva").length;
@@ -76,6 +77,7 @@ function AuthedApp() {
   return (
     <AdminShell profile={profile} onLogout={logout} onLangChange={onLangChange} page={page} setPage={setPage} badges={{ dashboard: nuevas + incidentes, programacion: sinLeer }}>
       {data.error && <div style={{ marginBottom: 16 }}><Banner tone="danger" icon={AlertTriangle}>{t("nav.dataError", { e: data.error })} <button className="btn-ghost btn-sm" style={{ marginLeft: 8 }} onClick={data.refresh}><RefreshCw size={12} /> {t("common.retry")}</button></Banner></div>}
+      <ErrorBoundary resetKey={page} labels={{ title: t("err.title"), body: t("err.body"), retry: t("err.retry"), reload: t("err.reload") }}>
       {page === "dashboard" && <Dashboard {...common} goTo={setPage} />}
       {page === "clientes" && <ClientsPage {...common} />}
       {page === "personal" && <StaffPage {...common} />}
@@ -84,6 +86,7 @@ function AuthedApp() {
       {page === "recursos" && <ResourcesPage {...common} />}
       {page === "reportes" && <ReportsPage {...common} />}
       {page === "rentabilidad" && <ProfitabilityPage {...common} />}
+      </ErrorBoundary>
     </AdminShell>
   );
 }
