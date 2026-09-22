@@ -56,6 +56,8 @@ supabase/
                           → 0004 traducciones de checklists → 0005 mensajes por trabajo (chat beta) → 0006 vista staff_nombres + publicación realtime → 0007 idioma del cliente → 0008 recargos, costo por hora y recursos
   functions/send-email    correo por SMTP de Gmail (solo usuarios autenticados, sin contraseña en el código)
   functions/admin-users   crea / resetea / elimina usuarios de Auth del personal (solo admin)
+  functions/_pegar_en_el_panel  copias de un solo archivo de las dos funciones, para
+                          desplegarlas desde el panel de Supabase si no hay CLI (ver su LEEME)
   dev/                    reset_staging.sql y seed_staging.sql (solo para un proyecto de prueba)
 scripts/
   i18n_build.py           tabla única (clave, es, en, is) → diccionarios. Editar acá, no en src/i18n
