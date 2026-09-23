@@ -23,6 +23,12 @@ export async function upsertStaff(row) {
   must(await supabase.from("staff").upsert(data));
   return data;
 }
+// Cambio puntual de un campo (p. ej. la tarifa por hora) sin reenviar toda la ficha.
+export async function updateStaff(id, patch) {
+  if (MOCK) return mockApi.update("staff", id, patch);
+  must(await supabase.from("staff").update(patch).eq("id", id));
+  return true;
+}
 export async function deleteStaff(id) { if (MOCK) return mockApi.remove("staff", id); must(await supabase.from("staff").delete().eq("id", id)); }
 
 /* ------------------------------------------------------------- servicios */

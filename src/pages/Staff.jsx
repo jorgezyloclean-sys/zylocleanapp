@@ -171,6 +171,7 @@ function StaffDetail({ item: s, jobs, clients, registros, checklists, recursos =
   const rango = presets[periodo] || presets.mes;
   const pago = costoPersona(s, registros, jobs, rango.from, rango.to);
   const [userForm, setUserForm] = useState({ email: s.email || "", password: "" });
+  const [tarifa, setTarifa] = useState(s.costo_hora ?? "");
   const [busy, setBusy] = useState(false);
   const sJobs = jobsForStaff(jobs, s.id);
 
@@ -191,6 +192,13 @@ function StaffDetail({ item: s, jobs, clients, registros, checklists, recursos =
     if (!(await confirm({ title: t("st.removeAccessTitle"), body: t("st.removeAccessBody", { name: s.nombre }), danger: true, confirmLabel: t("st.removeAccess") }))) return;
     setBusy(true);
     if (await run(() => api.adminUsers("unlink", { staff_id: s.id }), { ok: t("st.accessRemoved") })) patch("staff", { id: s.id, auth_user_id: null });
+    setBusy(false);
+  }
+  async function guardarTarifa() {
+    const v = Number(tarifa);
+    if (!(v > 0)) { toast(t("st.pay.rateErr"), "error"); return; }
+    setBusy(true);
+    if (await run(() => api.updateStaff(s.id, { costo_hora: v }), { ok: t("st.pay.rateSaved") })) patch("staff", { id: s.id, costo_hora: v });
     setBusy(false);
   }
   function exportar() {
@@ -250,6 +258,16 @@ function StaffDetail({ item: s, jobs, clients, registros, checklists, recursos =
         ) : (
           <p style={{ fontSize: 12.5, color: C.muted }}>{t("st.pay.noRate", { h: hoursLabel(pago.horas), n: pago.trabajos })}</p>
         )}
+        <div style={{ display: "flex", alignItems: "flex-end", gap: 8, flexWrap: "wrap", marginTop: 12, paddingTop: 12, borderTop: `1px solid ${C.borderSubtle}` }}>
+          <Field label={t("st.pay.rate")} hint={t("st.pay.rateHint")}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <input type="number" min={0} step="any" inputMode="decimal" className="input-base tabular" style={{ width: 120 }}
+                value={tarifa} onChange={(e) => setTarifa(e.target.value)} placeholder="0" />
+              <span style={{ fontSize: 12.5, color: C.muted }}>ISK/h</span>
+              <button className="btn-ghost btn-sm" onClick={guardarTarifa} disabled={busy || String(tarifa) === String(s.costo_hora ?? "")}>{t("st.pay.rateSave")}</button>
+            </div>
+          </Field>
+        </div>
         <p style={{ fontSize: 11, color: C.muted2, marginTop: 8 }}>{t("st.pay.note")}</p>
       </div>
 

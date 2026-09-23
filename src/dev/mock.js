@@ -21,7 +21,7 @@ const store = {
   staff: [
     { id: "e1", nombre: "Jorge Ojeda", rol: "admin", tipo: "Fijo", pago: "Sueldo fijo", idiomas: ["Español", "Inglés"], activo: true, estado: "activo", idioma: "es", auth_user_id: "auth-1", email: "jorgezyloclean@gmail.com", telefono: "+354 555 0001", destacado: false },
     { id: "e2", nombre: "Ana Torres", costo_hora: 2500, rol: "operativo", tipo: "Fijo", pago: "Por hora", idiomas: ["Español"], activo: true, estado: "activo", idioma: "es", auth_user_id: "auth-2", email: "ana@example.com", telefono: "+354 555 0002", destacado: true, kennitala: "010190-1234" },
-    { id: "e3", nombre: "Tomasz Nowak", costo_hora: 2500, rol: "operativo", tipo: "Temporada", pago: "Por hora", idiomas: ["Polaco", "Inglés"], activo: true, estado: "activo", idioma: "en", auth_user_id: null, email: null, telefono: "", destacado: false },
+    { id: "e3", nombre: "Tomasz Nowak", rol: "operativo", tipo: "Temporada", pago: "Por hora", idiomas: ["Polaco", "Inglés"], activo: true, estado: "activo", idioma: "en", auth_user_id: null, email: null, telefono: "", destacado: false },
     { id: "e4", nombre: "Sigrún Ólafsdóttir", costo_hora: 2800, rol: "operativo", tipo: "Por hora", pago: "Por trabajo", idiomas: ["Islandés", "Inglés"], activo: true, estado: "activo", idioma: "is", auth_user_id: "auth-4", email: "sigrun@example.is", telefono: "", destacado: false },
   ],
   checklists: [
