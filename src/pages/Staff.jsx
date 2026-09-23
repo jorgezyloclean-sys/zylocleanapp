@@ -56,6 +56,7 @@ export default function StaffPage({ staff, jobs, checklists, clients, registros,
           const sJobs = jobsForStaff(jobs, s.id);
           const cumpl = avgChecklistPct(sJobs, checklists);
           const horas = registros.filter((r) => r.personal_id === s.id && r.fin).reduce((a, r) => a + (new Date(r.fin) - new Date(r.inicio)) / 3_600_000, 0);
+          const suyos = recursos.filter((r) => r.staff_id === s.id && r.activo !== false);
           return (
             <div key={s.id} className="card animate-fadeUp" style={{ animationDelay: `${i * 50}ms`, marginTop: 0, cursor: "pointer" }} onClick={() => setModal({ mode: "view", item: s })} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && setModal({ mode: "view", item: s })}>
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
@@ -74,6 +75,15 @@ export default function StaffPage({ staff, jobs, checklists, clients, registros,
                 <Pill tone={s.rol === "admin" ? "primary" : "neutral"}>{s.rol === "admin" ? t("st.admin") : t("st.operativo")}</Pill>
                 {s.auth_user_id ? <Pill tone="success" icon={UserCheck}>{t("st.hasAccess")}</Pill> : <Pill tone="amber" icon={UserX}>{t("st.noAccess")}</Pill>}
                 {s.activo === false && <Pill tone="neutral">{t("estado.inactivo")}</Pill>}
+                {/* Vehículo o máquina a su cargo; si tiene varios, el primero y cuántos más. */}
+                {suyos.length > 0 && (
+                  <span title={suyos.map((r) => [r.nombre, r.identificador].filter(Boolean).join(" · ")).join("\n")}>
+                    <Pill tone="primary" icon={suyos[0].tipo === "vehiculo" ? Truck : Wrench}>
+                      <span style={{ maxWidth: 130, overflow: "hidden", textOverflow: "ellipsis" }}>{suyos[0].nombre}</span>
+                      {suyos.length > 1 && <span>+{suyos.length - 1}</span>}
+                    </Pill>
+                  </span>
+                )}
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10 }}>
                 <StarRating value={avgRating(sJobs)} empty={t("common.noRatings")} />
